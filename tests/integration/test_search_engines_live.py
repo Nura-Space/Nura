@@ -1,10 +1,19 @@
 """Integration tests for search engines with real API calls."""
+import os
 import pytest
 
 from nura.tool.search.baidu_search import BaiduSearchEngine
 from nura.tool.search.bing_search import BingSearchEngine
 from nura.tool.search.google_search import GoogleSearchEngine
 from nura.tool.search.duckduckgo_search import DuckDuckGoSearchEngine
+
+
+def check_bing_api_key():
+    """Check if Bing API key is available."""
+    return bool(os.environ.get("BING_API_KEY") or os.environ.get("BING_SEARCH_V7_SUBSCRIPTION_KEY"))
+
+
+HAS_BING_KEY = check_bing_api_key()
 
 
 @pytest.mark.integration
@@ -31,6 +40,7 @@ def test_baidu_search_with_chinese_query():
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(not HAS_BING_KEY, reason="Bing API key not available")
 def test_bing_search_basic():
     """Test Bing search with real API."""
     engine = BingSearchEngine()
@@ -52,6 +62,7 @@ def test_bing_search_empty_query():
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(not HAS_BING_KEY, reason="Bing API key not available")
 def test_bing_search_with_chinese_query():
     """Test Bing search with Chinese query."""
     engine = BingSearchEngine()
@@ -85,6 +96,7 @@ def test_duckduckgo_search_basic():
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(not HAS_BING_KEY, reason="Bing API key not available")
 def test_all_engines_comparison():
     """Test all search engines and compare results."""
     query = "web development"
@@ -109,7 +121,7 @@ def test_all_engines_comparison():
 @pytest.mark.integration
 def test_search_result_format():
     """Test that all search engines return properly formatted results."""
-    engine = BingSearchEngine()
+    engine = DuckDuckGoSearchEngine()
     results = engine.perform_search("test", num_results=3)
 
     for item in results:

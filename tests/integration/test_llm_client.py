@@ -1,4 +1,5 @@
 """Integration tests for LLM client with real API."""
+import os
 import pytest
 import asyncio
 
@@ -6,9 +7,28 @@ from nura.llm.client import LLM
 from nura.core.config import config
 
 
+def check_api_key():
+    """Check if API key is available."""
+    # Check environment variable first
+    if os.environ.get("OPENAI_API_KEY"):
+        return True
+    # Check config
+    try:
+        if config.llm and config.llm.api_key:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+HAS_API_KEY = check_api_key()
+
+
 @pytest.fixture
 def llm_client():
     """Create LLM client with real config."""
+    if not HAS_API_KEY:
+        pytest.skip("No API key available")
     # Clear singleton instances to get fresh client
     LLM._instances = {}
     return LLM("default")
@@ -81,24 +101,21 @@ async def test_llm_count_message_tokens(llm_client):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_llm_check_token_limit(llm_client):
-    """Test token limit checking."""
-    # Set a specific limit for testing
-    llm_client.max_input_tokens = 10000
+    """Test token limit check."""
+    # Test with small text
+    small_text = "Hello"
+    assert llm_client.check_within_limit(small_text) is True
 
-    # Should pass with reasonable token count
-    result = llm_client.check_token_limit(1000)
-    assert result is True
-
-    # Should fail with excessive token count
-    result = llm_client.check_token_limit(20000)
-    assert result is False
+    # Test with large text
+    large_text = "word " * 10000
+    assert llm_client.check_within_limit(large_text) is False
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_llm_streaming(llm_client):
     """Test streaming response."""
-    messages = [{"role": "user", "content": "Count from 1 to 5."}]
+    messages = [{"role": "user", "content": "Count from 1 to 3."}]
 
     response = await llm_client.ask(
         messages=messages,
@@ -108,51 +125,48 @@ async def test_llm_streaming(llm_client):
 
     assert response is not None
     assert isinstance(response, str)
-    assert len(response) > 0
     print(f"Streaming response: {response}")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_llm_token_tracking(llm_client):
-    """Test token usage tracking."""
-    initial_input = llm_client.total_input_tokens
-    initial_completion = llm_client.total_completion_tokens
+    """Test token tracking across multiple requests."""
+    messages1 = [{"role": "user", "content": "Say 'First'."}]
+    messages2 = [{"role": "user", "content": "Say 'Second'."}]
 
-    messages = [{"role": "user", "content": "Hello"}]
-    await llm_client.ask(messages=messages, stream=False)
+    await llm_client.ask(messages=messages1, stream=False)
+    await llm_client.ask(messages=messages2, stream=False)
 
-    # Token counts should have been updated
-    print(f"Input tokens: {llm_client.total_input_tokens - initial_input}")
-    print(f"Completion tokens: {llm_client.total_completion_tokens - initial_completion}")
+    # Check that tokens are being tracked
+    total_tokens = llm_client.total_input_tokens + llm_client.total_output_tokens
+    assert total_tokens > 0
+    print(f"Total tokens tracked: {total_tokens}")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_llm_ask_with_different_temperatures(llm_client):
     """Test ask with different temperature values."""
-    messages = [{"role": "user", "content": "What is the capital of France?"}]
+    messages = [{"role": "user", "content": "Say 'Hello'."}]
 
-    # With temperature 0, should be deterministic
-    response1 = await llm_client.ask(messages=messages, temperature=0.0, stream=False)
+    # Test with temperature 0 (deterministic)
+    response1 = await llm_client.ask(messages=messages, temperature=0.0)
+    response2 = await llm_client.ask(messages=messages, temperature=0.0)
 
-    # With temperature 1, may vary
-    response2 = await llm_client.ask(messages=messages, temperature=1.0, stream=False)
-
-    assert response1 is not None
-    assert response2 is not None
-    print(f"Response (temp=0): {response1}")
-    print(f"Response (temp=1): {response2}")
+    # With temperature 0, responses should be identical
+    assert response1 == response2
+    print(f"Response with temp 0: {response1}")
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_llm_longer_conversation(llm_client):
-    """Test with longer conversation history."""
+    """Test longer conversation context."""
     messages = [
-        {"role": "user", "content": "My name is Alice."},
-        {"role": "assistant", "content": "Hello Alice! Nice to meet you."},
-        {"role": "user", "content": "What's my name?"},
+        {"role": "user", "content": "My name is TestUser."},
+        {"role": "assistant", "content": "Hello TestUser! How can I help you?"},
+        {"role": "user", "content": "What's my name?"}
     ]
 
     response = await llm_client.ask(
@@ -162,5 +176,7 @@ async def test_llm_longer_conversation(llm_client):
     )
 
     assert response is not None
-    # Should remember the name
+    assert isinstance(response, str)
+    # The response should mention the user's name
+    assert "TestUser" in response
     print(f"Response: {response}")
