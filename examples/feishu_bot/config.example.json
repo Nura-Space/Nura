@@ -1,0 +1,14 @@
+{
+  "feishu_app_id": "your_feishu_app_id",
+  "feishu_app_secret": "your_feishu_app_secret",
+  "profile_path": "examples/feishu_bot/profiles/default.yaml",
+  "memory_dir": "examples/feishu_bot/memory",
+  "enable_voice_reply": false,
+  "message_collect_seconds": 10,
+  "tts_config": {
+    "access_token": "your_volcengine_access_token",
+    "app_id": "your_volcengine_app_id",
+    "cluster": "volcano_tts",
+    "voice_type": "zh_female_qingxin"
+  }
+}

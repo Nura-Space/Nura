@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Lock files (for library projects, use pyproject.toml for dependencies)
+*.lock
+uv.lock
+pip-lock.json
+poetry.lock
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.json
+coverage_output.txt
+.coveragerc
+htmlcov/
+.tox/
+.nox/
+TEST_COVERAGE_REPORT.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Linting/Formatting
+.ruff_cache/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+config/config.json
+config/config.toml
+examples/**/config.json
+*.env
+
+# Claude
+.claude/
+CLAUDE.md

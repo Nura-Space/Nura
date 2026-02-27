@@ -1,0 +1,30 @@
+# Global LLM configuration (Doubao-Seed-1.8)
+[llm]
+model = "ep-XXXXXXXXXXXXXXXXXXXXXXXXXX"                                       # The LLM model to use
+base_url = "https://ark.cn-beijing.volces.com/api/v3"                   # API endpoint URL
+api_key = "YOUR_API_KEY_HERE"                                              # Your API key
+max_tokens = 32768                                                      # Maximum number of tokens in the response
+temperature = 0.0                                                       # Controls randomness
+cache_ttl = 300                                                        # Cache TTL in seconds
+cache_strategy = "input_only"                                          # "full" (cache input + output) or "input_only" (cache input only, strategy 2)
+
+# Optional configuration for specific LLM models for Doubao-Seed-1.8
+[llm.vision]
+model = "ep-XXXXXXXXXXXXXXXXXXXXXXXXXX"                                       # The vision model to use
+base_url = "https://ark.cn-beijing.volces.com/api/v3"                   # API endpoint URL for vision model
+api_key = "YOUR_API_KEY_HERE"                                              # Your API key for vision model
+max_tokens = 32768                                                      # Maximum number of tokens in the response
+temperature = 0.0                                                       # Controls randomness for vision model
+
+[browser]
+# Path to a Chrome instance to use to connect to your normal browser
+# e.g. '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+chrome_instance_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+# Extra arguments to pass to the browser
+extra_chromium_args = ["--user-data-dir=/path/to/chrome-data"]
+
+[daytona]
+daytona_api_key = ""
+
+[memory]
+memory_dir = "/path/to/memory/directory"
