@@ -9,7 +9,6 @@ from functools import wraps
 from nura.skill.types import Skill, SkillRequires
 from nura.core.logger import logger
 
-
 # Singleton registry for testing
 _singleton_instances: Dict[type, object] = {}
 
@@ -23,7 +22,7 @@ def reset_singleton(cls):
     # The key in _singleton_instances is the original class, not the decorated function
     # If cls is a function (the singleton wrapper), we need to get the original class
     # We can do this by checking if it's callable and has a __wrapped__ attribute
-    if hasattr(cls, '__wrapped__'):
+    if hasattr(cls, "__wrapped__"):
         original_cls = cls.__wrapped__
     else:
         original_cls = cls
@@ -33,11 +32,13 @@ def reset_singleton(cls):
 
 def singleton(cls):
     """Singleton decorator."""
+
     @wraps(cls)
     def get_instance(*args, **kwargs):
         if cls not in _singleton_instances:
             _singleton_instances[cls] = cls(*args, **kwargs)
         return _singleton_instances[cls]
+
     return get_instance
 
 
@@ -63,7 +64,9 @@ class SkillManager:
         self.workspace = Path(workspace)
         self.workspace_skills = self.workspace / "skills"
         # None means don't load any builtin skills, otherwise use the path
-        self.builtin_skills = Path(builtin_skills_dir) if builtin_skills_dir is not None else None
+        self.builtin_skills = (
+            Path(builtin_skills_dir) if builtin_skills_dir is not None else None
+        )
         self.skills: Dict[str, Skill] = {}
 
     def load_skills(self) -> None:
@@ -86,7 +89,9 @@ class SkillManager:
             return
 
         skill_files = list(skills_dir.rglob("SKILL.md"))
-        logger.info(f"Found {len(skill_files)} skill files in {skills_dir} (source: {source})")
+        logger.info(
+            f"Found {len(skill_files)} skill files in {skills_dir} (source: {source})"
+        )
 
         for file_path in skill_files:
             try:
@@ -96,7 +101,12 @@ class SkillManager:
                     if skill.name in self.skills and source == "builtin":
                         continue
                     self.skills[skill.name] = skill
-                    logger.info("Loaded skill", name=skill.name, path=str(file_path), source=source)
+                    logger.info(
+                        "Loaded skill",
+                        name=skill.name,
+                        path=str(file_path),
+                        source=source,
+                    )
             except Exception as e:
                 logger.error("Failed to load skill", path=str(file_path), error=str(e))
 
@@ -122,11 +132,7 @@ class SkillManager:
         """
         Get skills marked as always=true that meet requirements.
         """
-        return [
-            s.name
-            for s in self.skills.values()
-            if s.always and s.available
-        ]
+        return [s.name for s in self.skills.values() if s.always and s.available]
 
     def build_skills_summary(self, lang: str = "en") -> str:
         """
@@ -164,7 +170,7 @@ class SkillManager:
                 "description": "描述",
             },
         }
-        l = labels.get(lang, "en")
+        labels_dict = labels.get(lang, "en")
 
         def escape_xml(s: str) -> str:
             return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -175,21 +181,25 @@ class SkillManager:
             desc = escape_xml(skill.description)
             available = skill.available
 
-            lines.append(f'  <skill>')
-            lines.append(f"    <{l['name']}>{name}</{l['name']}>")
-            lines.append(f"    <{l['description']}>{desc}</{l['description']}>")
+            lines.append("  <skill>")
+            lines.append(f"    <{labels_dict['name']}>{name}</{labels_dict['name']}>")
+            lines.append(
+                f"    <{labels_dict['description']}>{desc}</{labels_dict['description']}>"
+            )
             # 暂时不要
-            # lines.append(f"    <{l['location']}>{path}</{l['location']}>")
+            # lines.append(f"    <{labels_dict['location']}>{path}</{labels_dict['location']}>")
 
             # Show availability status for unavailable skills
             if not available:
-                status = l['unavailable']
+                status = labels_dict["unavailable"]
                 lines.append(f"    <Status>{escape_xml(status)}</Status>")
                 # Show missing requirements for unavailable skills
                 if skill.requires:
                     missing = self._get_missing_requirements(skill.requires)
                     if missing:
-                        lines.append(f"    <{l['requires']}>{escape_xml(missing)}</{l['requires']}>")
+                        lines.append(
+                            f"    <{labels_dict['requires']}>{escape_xml(missing)}</{labels_dict['requires']}>"
+                        )
 
             lines.append("  </skill>")
         lines.append("</skills>")
@@ -224,10 +234,12 @@ class SkillManager:
         if content.startswith("---"):
             match = re.match(r"^---\n.*?\n---\n", content, re.DOTALL)
             if match:
-                return content[match.end():].strip()
+                return content[match.end() :].strip()
         return content
 
-    def _parse_skill_file(self, file_path: Path, source: str = "builtin") -> Optional[Skill]:
+    def _parse_skill_file(
+        self, file_path: Path, source: str = "builtin"
+    ) -> Optional[Skill]:
         """
         Parses a SKILL.md file and returns a Skill object.
         """
@@ -240,7 +252,7 @@ class SkillManager:
                 match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
                 if match:
                     frontmatter_raw = match.group(1)
-                    body = content[match.end():].strip()
+                    body = content[match.end() :].strip()
                 else:
                     # No closing --- found, treat everything after first --- as body
                     frontmatter_raw = content[3:]
@@ -261,7 +273,9 @@ class SkillManager:
             try:
                 metadata = yaml.safe_load(frontmatter_raw)
                 if not isinstance(metadata, dict):
-                    logger.warning("Invalid frontmatter (must be a dict)", path=str(file_path))
+                    logger.warning(
+                        "Invalid frontmatter (must be a dict)", path=str(file_path)
+                    )
                     return None
             except yaml.YAMLError as e:
                 logger.error("YAML parsing error", path=str(file_path), error=str(e))

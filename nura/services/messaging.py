@@ -1,4 +1,5 @@
 """Abstract messaging service interface."""
+
 from abc import ABC, abstractmethod
 
 
@@ -11,11 +12,15 @@ class MessagingService(ABC):
         pass
 
     @abstractmethod
-    async def send_file(self, conversation_id: str, file_path: str, file_type: str) -> None:
+    async def send_file(
+        self, conversation_id: str, file_path: str, file_type: str
+    ) -> None:
         """Send file"""
         pass
 
     @abstractmethod
-    async def send_audio(self, conversation_id: str, file_path: str, duration: int) -> None:
+    async def send_audio(
+        self, conversation_id: str, file_path: str, duration: int
+    ) -> None:
         """Send audio message"""
         pass

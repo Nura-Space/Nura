@@ -29,6 +29,7 @@ websearch = [
     "duckduckgo_search~=7.5.3",
     "beautifulsoup4~=4.13.3",
     "requests~=2.32.3",
+    "baidusearch~=1.0.3",
 ]
 feishu = ["lark-oapi"]
 all = [
@@ -38,6 +39,7 @@ all = [
     "duckduckgo_search~=7.5.3",
     "beautifulsoup4~=4.13.3",
     "requests~=2.32.3",
+    "baidusearch~=1.0.3",
     "lark-oapi",
 ]
 

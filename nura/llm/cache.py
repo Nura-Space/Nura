@@ -1,4 +1,5 @@
 """Caching utilities for LLM providers."""
+
 import time
 from typing import Any, List, Optional, Union
 
@@ -58,7 +59,9 @@ async def ask_with_ark_cache(
     # Format messages
     if system_msgs:
         formatted_system = format_messages(system_msgs, supports_images)
-        formatted_messages = formatted_system + format_messages(messages, supports_images)
+        formatted_messages = formatted_system + format_messages(
+            messages, supports_images
+        )
     else:
         formatted_messages = format_messages(messages, supports_images)
 
@@ -122,7 +125,7 @@ async def ask_with_ark_cache(
 
     # Calculate cache_ttl
     try:
-        cache_ttl = config.llm['default'].cache_ttl
+        cache_ttl = config.llm["default"].cache_ttl
     except (AttributeError, KeyError):
         cache_ttl = 3600
 
@@ -135,8 +138,8 @@ async def ask_with_ark_cache(
         "extra_body": {
             "expire_at": int(time.time()) + cache_ttl,
             "caching": {"type": "enabled"},
-            "thinking": {"type": "disabled"}
-        }
+            "thinking": {"type": "disabled"},
+        },
     }
 
     if previous_response_id:
@@ -156,9 +159,17 @@ async def ask_with_ark_cache(
     for msg in ark_messages:
         # Create a copy to avoid modifying the original message
         log_msg = dict(msg) if msg else {}
-        if "content" in log_msg and isinstance(log_msg["content"], str) and len(log_msg["content"]) > 10:
+        if (
+            "content" in log_msg
+            and isinstance(log_msg["content"], str)
+            and len(log_msg["content"]) > 10
+        ):
             log_msg["content"] = log_msg["content"][:10] + "..."
-        if "base64_image" in log_msg and isinstance(log_msg["base64_image"], str) and len(log_msg["base64_image"]) > 10:
+        if (
+            "base64_image" in log_msg
+            and isinstance(log_msg["base64_image"], str)
+            and len(log_msg["base64_image"]) > 10
+        ):
             log_msg["content"] = log_msg["base64_image"][:10] + "..."
         logger.info(log_msg)
 
@@ -178,7 +189,9 @@ async def ask_with_ark_cache(
     # Update token counts (if update_token_count is available)
     if hasattr(response, "usage") and hasattr(response.usage, "input_tokens"):
         cached_tokens = 0
-        if hasattr(response.usage, "input_tokens_details") and hasattr(response.usage.input_tokens_details, "cached_tokens"):
+        if hasattr(response.usage, "input_tokens_details") and hasattr(
+            response.usage.input_tokens_details, "cached_tokens"
+        ):
             cached_tokens = response.usage.input_tokens_details.cached_tokens
         return {
             "message": parsed_message,

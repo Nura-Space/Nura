@@ -1,4 +1,5 @@
 """Message tool for sending messages to the user."""
+
 import os
 import re
 import tempfile
@@ -14,9 +15,12 @@ from nura.services.utils import convert_to_opus, get_audio_duration
 def _get_client():
     """Get the current platform client."""
     from nura.services.base import ClientFactory
+
     client = ClientFactory.get_current_client()
     if not client:
-        raise RuntimeError("No platform client configured. Call ClientFactory.set_current_platform() first.")
+        raise RuntimeError(
+            "No platform client configured. Call ClientFactory.set_current_platform() first."
+        )
     return client
 
 
@@ -44,8 +48,25 @@ class SendMessage(BaseTool):
             "emotion": {
                 "type": "string",
                 "description": "情感类型，根据消息内容选择：happy(开心)、thanks(感谢)、goodbye(再见)、excited(兴奋)、thinking(思考)、sad(悲伤)、agree(同意)、greeting(问候)、encourage(鼓励)、surprise(惊讶)、waiting(等待)、working(工作中)、eating(餐饮)、travel(出行)、holiday(节日)、disagree(不同意)。不指定时默认不加表情。",
-                "enum": ["happy", "thanks", "goodbye", "excited", "thinking", "sad", "agree", "greeting", "encourage", "surprise", "waiting", "working", "eating", "travel", "holiday", "disagree"]
-            }
+                "enum": [
+                    "happy",
+                    "thanks",
+                    "goodbye",
+                    "excited",
+                    "thinking",
+                    "sad",
+                    "agree",
+                    "greeting",
+                    "encourage",
+                    "surprise",
+                    "waiting",
+                    "working",
+                    "eating",
+                    "travel",
+                    "holiday",
+                    "disagree",
+                ],
+            },
         },
         "required": ["content"],
     }
@@ -82,7 +103,7 @@ class SendMessage(BaseTool):
         client = _get_client()
 
         # Determine if voice reply should be used
-        enable_voice = getattr(client, '_enable_voice', False)
+        enable_voice = getattr(client, "_enable_voice", False)
 
         # Split by newline and process each segment
         segments = content.split("\n")
@@ -92,7 +113,7 @@ class SendMessage(BaseTool):
                 continue
 
             # Check if this is an emoji-only segment like [SomeEmoji]
-            if re.match(r'^\[.+\]$', segment):
+            if re.match(r"^\[.+\]$", segment):
                 text_content = TextContent(text=segment)
                 await client.send(text_content)
             elif enable_voice:
@@ -103,8 +124,9 @@ class SendMessage(BaseTool):
                 await client.send(text_content)
 
         # Send emotion emoji as separate message (50% probability)
-        if emotion and hasattr(client, 'emoji_func'):
+        if emotion and hasattr(client, "emoji_func"):
             import random
+
             if emotion in client.emoji_func and random.random() > 0.5:
                 emoji_text = random.choice(client.emoji_func[emotion])
                 text_content = TextContent(text=emoji_text)
@@ -117,7 +139,7 @@ class SendMessage(BaseTool):
     async def _send_voice(self, text: str):
         """Send voice reply using TTS."""
         client = _get_client()
-        tts_service = getattr(client, '_tts_service', None)
+        tts_service = getattr(client, "_tts_service", None)
         if not tts_service:
             # Fallback to text if TTS not available
             text_content = TextContent(text=text)
@@ -153,9 +175,7 @@ class SendMessage(BaseTool):
             logger.info(f"Got audio duration: {duration}ms for voice reply")
 
             audio_content = AudioContent(
-                file_path=opus_path,
-                file_type="opus",
-                duration=duration
+                file_path=opus_path, file_type="opus", duration=duration
             )
 
             await client.send(audio_content)

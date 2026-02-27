@@ -1,4 +1,5 @@
 """Context manager with turn-based token compression."""
+
 import time
 from typing import List, Optional, Callable, Any, Awaitable
 
@@ -35,6 +36,7 @@ class ContextManager:
         self._tokenizer: Optional[Any] = None  # tiktoken encoding
         try:
             import tiktoken
+
             try:
                 self._tokenizer = tiktoken.encoding_for_model("gpt-4")
             except KeyError:
@@ -141,7 +143,9 @@ class ContextManager:
             return self._messages.copy()
 
         # Keep the last N turns
-        keep_count = sum(len(turns[i]) for i in range(len(turns) - keep_turns, len(turns)))
+        keep_count = sum(
+            len(turns[i]) for i in range(len(turns) - keep_turns, len(turns))
+        )
         return self._messages[-keep_count:]
 
     def get_messages_for_llm(self) -> List[dict]:
@@ -150,10 +154,12 @@ class ContextManager:
 
         # Add summary if exists (from compressed older turns)
         if self._summary:
-            messages.append({
-                "role": "system",
-                "content": f"Previous conversation summary:\n{self._summary}"
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": f"Previous conversation summary:\n{self._summary}",
+                }
+            )
 
         # Add messages to keep (recent N turns)
         keep_messages = self._get_keep_messages()
@@ -190,7 +196,9 @@ class ContextManager:
         """Get the number of conversation turns"""
         return len(self._get_turns())
 
-    async def compress(self, summarizer: Optional[Callable[[List[Message]], Awaitable[str]]] = None) -> bool:
+    async def compress(
+        self, summarizer: Optional[Callable[[List[Message]], Awaitable[str]]] = None
+    ) -> bool:
         """
         Compress context by summarizing older turns.
 
@@ -211,7 +219,9 @@ class ContextManager:
             logger.debug("Skipping compression - too soon")
             return False
 
-        logger.info(f"Compressing context: {len(self._messages)} messages, {self.turn_count} turns, ~{self._token_count} tokens")
+        logger.info(
+            f"Compressing context: {len(self._messages)} messages, {self.turn_count} turns, ~{self._token_count} tokens"
+        )
 
         if summarizer:
             try:
@@ -240,7 +250,9 @@ class ContextManager:
             except Exception as e:
                 logger.error(f"Compress callback error: {e}")
 
-        logger.info(f"Compression complete: {len(self._messages)} messages, {self.turn_count} turns, ~{self._token_count} tokens")
+        logger.info(
+            f"Compression complete: {len(self._messages)} messages, {self.turn_count} turns, ~{self._token_count} tokens"
+        )
         return True
 
     def register_compress_callback(self, callback: Callable[[], Any]) -> None:

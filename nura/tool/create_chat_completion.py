@@ -31,7 +31,7 @@ class CreateChatCompletion(BaseTool):
 
     def _build_parameters(self) -> dict:
         """Build parameters schema based on response type."""
-        if self.response_type == str:
+        if self.response_type is str:
             return {
                 "type": "object",
                 "properties": {
@@ -152,7 +152,7 @@ class CreateChatCompletion(BaseTool):
             result = kwargs.get(required_field, "")
 
         # Type conversion logic
-        if self.response_type == str:
+        if self.response_type is str:
             return result
 
         if isinstance(self.response_type, type) and issubclass(

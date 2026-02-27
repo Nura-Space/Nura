@@ -67,11 +67,7 @@ class EventDrivenAgent:
             system_prompt=system_prompt,
             next_step_prompt="",
             available_tools=ToolCollection(
-                EndChat(),
-                SendFile(),
-                SendMessage(),
-                Skills(),
-                WebSearch()
+                EndChat(), SendFile(), SendMessage(), Skills(), WebSearch()
             ),
             special_tool_names=[EndChat().name],
             max_steps=30,  # Keep as safety limit, but compression should prevent hitting it
@@ -96,12 +92,14 @@ class EventDrivenAgent:
 
         # Initialize SkillWorker
         from nura.core.skill_queue import get_skill_queue, get_skill_worker
+
         self._skill_queue = get_skill_queue()
         self._skill_worker = get_skill_worker(self._skill_queue)
 
         # Set up callback for skill completion
         self._skill_queue.set_complete_callback(self._on_skill_complete)
         from nura.core.logger import logger
+
         logger.info(f"Skill complete callback set on queue: {id(self._skill_queue)}")
 
     @property
@@ -150,12 +148,14 @@ class EventDrivenAgent:
     def is_running(self) -> bool:
         """Agent 是否正在处理任务 (RUNNING 状态)"""
         from nura.core.schema import AgentState
+
         return self._base_agent.state == AgentState.RUNNING
 
     @property
     def is_idle(self) -> bool:
         """Agent 是否空闲 (IDLE 状态)"""
         from nura.core.schema import AgentState
+
         return self._base_agent.state == AgentState.IDLE
 
     async def start(self) -> None:
@@ -224,6 +224,7 @@ class EventDrivenAgent:
         # Set chat_id for current platform client
         conversation_id = event.conversation_id
         from nura.services.base import ClientFactory
+
         client = ClientFactory.get_current_client()
         if client:
             client.chat_id = conversation_id
@@ -231,13 +232,14 @@ class EventDrivenAgent:
 
         # Wait for user to potentially send more messages before triggering agent response
         # This allows time for user to compose and send multiple messages
-        logger.info(f"Waiting {self._message_collect_seconds}s for potential user messages...")
+        logger.info(
+            f"Waiting {self._message_collect_seconds}s for potential user messages..."
+        )
         await asyncio.sleep(self._message_collect_seconds)
 
         # Check if we need to collect debounced messages
         events = await self._lane_queue.get_with_debounce(
-            event.conversation_id,
-            self._debounce_seconds
+            event.conversation_id, self._debounce_seconds
         )
 
         # Extract content and base64_image from event data - support both dict and object formats
@@ -279,6 +281,7 @@ class EventDrivenAgent:
 
         # Set chat_id for current platform client
         from nura.services.base import ClientFactory
+
         client = ClientFactory.get_current_client()
         if client:
             client.chat_id = conversation_id
@@ -291,7 +294,7 @@ class EventDrivenAgent:
             skill_name = result.get("skill_name", "unknown")
             result_content = result.get("result", "")
             user_input = f"[Skill completed] {skill_name}: {result_content}"
-        elif hasattr(result, 'result'):
+        elif hasattr(result, "result"):
             # Legacy object format (e.g., SkillTask)
             user_input = f"[Task completed] {result.result}"
 
@@ -309,7 +312,10 @@ class EventDrivenAgent:
         to trigger the main agent to respond.
         """
         from nura.core.logger import logger
-        logger.info(f">>> _on_skill_complete called for {task.skill_name}, status: {task.status}")
+
+        logger.info(
+            f">>> _on_skill_complete called for {task.skill_name}, status: {task.status}"
+        )
 
         # Prepare skill result for summarization
         from nura.core.schema import Message
@@ -327,11 +333,12 @@ class EventDrivenAgent:
             # Call LLM to summarize
             try:
                 from nura.llm import LLM
+
                 llm = LLM()
                 response = await llm.ask(
                     messages=[
                         Message.system_message(system_msg),
-                        Message.user_message(user_msg)
+                        Message.user_message(user_msg),
                     ]
                 )
                 # llm.ask() returns a string directly
@@ -348,9 +355,9 @@ class EventDrivenAgent:
                 data={
                     "skill_name": task.skill_name,
                     "result": summary,
-                    "raw_result": skill_result
+                    "raw_result": skill_result,
                 },
-                conversation_id=task.session_id or "default"
+                conversation_id=task.session_id or "default",
             )
             await self._lane_queue.put(event)
             logger.info(f"Skill result injected as BACKGROUND event: {task.skill_name}")
@@ -363,9 +370,9 @@ class EventDrivenAgent:
                 data={
                     "skill_name": task.skill_name,
                     "result": None,
-                    "error": task.result
+                    "error": task.result,
                 },
-                conversation_id=task.session_id or "default"
+                conversation_id=task.session_id or "default",
             )
             await self._lane_queue.put(event)
             logger.info(f"Skill failed event injected: {task.skill_name}")
@@ -383,7 +390,9 @@ class EventDrivenAgent:
         from nura.core.schema import AgentState, Message
 
         # Add user message to memory
-        self.memory.add_message(Message.user_message(user_input, base64_image=base64_image))
+        self.memory.add_message(
+            Message.user_message(user_input, base64_image=base64_image)
+        )
 
         # Set agent state to running
         async with self._base_agent.state_context(AgentState.RUNNING):
@@ -392,7 +401,9 @@ class EventDrivenAgent:
                 and self._base_agent.state != AgentState.FINISHED
             ):
                 self._base_agent.current_step += 1
-                logger.info(f"Step {self._base_agent.current_step}/{self._base_agent.max_steps}")
+                logger.info(
+                    f"Step {self._base_agent.current_step}/{self._base_agent.max_steps}"
+                )
 
                 # Check for new messages from Main Lane
                 self._check_for_new_messages()
@@ -418,7 +429,9 @@ class EventDrivenAgent:
                     compress_success = await self._compress_context()
                     if not compress_success:
                         # If compression failed, check if we should continue
-                        logger.warning("Context compression failed, checking if should continue")
+                        logger.warning(
+                            "Context compression failed, checking if should continue"
+                        )
 
             # Reset state if max steps reached
             if self._base_agent.current_step >= self._base_agent.max_steps:
@@ -435,10 +448,12 @@ class EventDrivenAgent:
                 if event and event.conversation_id == self._current_conversation:
                     logger.info(f"Received new message: {event.data.content}")
                     from nura.core.schema import Message
+
                     self.memory.add_message(Message.user_message(event.data.content))
                 elif event:
                     # Put it back if different conversation
                     import asyncio
+
                     asyncio.create_task(self._lane_queue.lane_queue.put(event))
         except Exception as e:
             logger.debug(f"Error checking for new messages: {e}")
@@ -446,6 +461,7 @@ class EventDrivenAgent:
     async def _compress_context(self) -> bool:
         """Compress context using the context manager"""
         from nura.core.schema import Message
+
         logger.info("Triggering context compression")
 
         async def summarize(messages: List[Message]) -> str:
@@ -455,21 +471,28 @@ class EventDrivenAgent:
 
             # Prepare messages for summarization
             system_prompt = "你是对话摘要助手。请简洁地总结以下对话的主要内容，保留关键信息和用户意图。"
-            conversation = "\n".join([
-                f"{msg.role}: {msg.content or '[无内容]'}"
-                for msg in messages if msg.content
-            ])
+            conversation = "\n".join(
+                [
+                    f"{msg.role}: {msg.content or '[无内容]'}"
+                    for msg in messages
+                    if msg.content
+                ]
+            )
 
             try:
                 llm = LLM()
                 response = await llm.ask(
                     messages=[
                         Msg.system_message(system_prompt),
-                        Msg.user_message(f"请总结以下对话:\n\n{conversation}")
+                        Msg.user_message(f"请总结以下对话:\n\n{conversation}"),
                     ],
-                    stream=False
+                    stream=False,
                 )
-                return response if response else f"[Summary of {len(messages)} previous messages]"
+                return (
+                    response
+                    if response
+                    else f"[Summary of {len(messages)} previous messages]"
+                )
             except Exception as e:
                 logger.error(f"Summarization failed: {e}")
                 return f"[Summary of {len(messages)} previous messages]"

@@ -45,33 +45,39 @@ class ArkMessageAdapter(BaseMessageAdapter):
             if message.get("role") == "assistant" and "tool_calls" in message:
                 # Convert OpenAI tool_calls to Ark function_call
                 for tool_call in message.get("tool_calls", []):
-                    ark_messages.append({
-                        "type": "function_call",
-                        "call_id": tool_call["id"],
-                        "name": tool_call["function"]["name"],
-                        "arguments": tool_call["function"]["arguments"]
-                    })
+                    ark_messages.append(
+                        {
+                            "type": "function_call",
+                            "call_id": tool_call["id"],
+                            "name": tool_call["function"]["name"],
+                            "arguments": tool_call["function"]["arguments"],
+                        }
+                    )
             elif message.get("role") == "tool":
                 # Convert OpenAI tool message to Ark function_call_output
-                ark_messages.append({
-                    "type": "function_call_output",
-                    "call_id": message["tool_call_id"],
-                    "output": message["content"]
-                })
+                ark_messages.append(
+                    {
+                        "type": "function_call_output",
+                        "call_id": message["tool_call_id"],
+                        "output": message["content"],
+                    }
+                )
             elif message.get("role") == "user" and message.get("base64_image"):
                 # Handle user message with base64 image for Ark format
                 content = message.get("content", "")
-                ark_messages.append({
-                    "role": "user",
-                    "type": "message",
-                    "content": [
-                        {"type": "input_text", "text": content} if content else {},
-                        {
-                            "type": "input_image",
-                            "image_url": f"data:image/jpeg;base64,{message['base64_image']}"
-                        }
-                    ]
-                })
+                ark_messages.append(
+                    {
+                        "role": "user",
+                        "type": "message",
+                        "content": [
+                            {"type": "input_text", "text": content} if content else {},
+                            {
+                                "type": "input_image",
+                                "image_url": f"data:image/jpeg;base64,{message['base64_image']}",
+                            },
+                        ],
+                    }
+                )
             else:
                 # Pass through regular messages
                 ark_messages.append(message)
@@ -107,18 +113,15 @@ class ArkMessageAdapter(BaseMessageAdapter):
                 tool_calls.append(
                     ChatCompletionMessageToolCall(
                         id=item.call_id,
-                        function=Function(
-                            name=item.name,
-                            arguments=item.arguments
-                        ),
-                        type="function"
+                        function=Function(name=item.name, arguments=item.arguments),
+                        type="function",
                     )
                 )
 
         message = ChatCompletionMessage(
             role="assistant",
             content=content,
-            tool_calls=tool_calls if tool_calls else None
+            tool_calls=tool_calls if tool_calls else None,
         )
 
         # Attach reasoning_content if present
@@ -139,12 +142,15 @@ class ArkMessageAdapter(BaseMessageAdapter):
         if tools is None:
             return None
 
-        return [{
-            "type": "function",
-            "name": tool.get("function", {}).get("name", ""),
-            "description": tool.get("function", {}).get("description", ""),
-            "parameters": tool.get("function", {}).get("parameters", {}),
-        } for tool in tools]
+        return [
+            {
+                "type": "function",
+                "name": tool.get("function", {}).get("name", ""),
+                "description": tool.get("function", {}).get("description", ""),
+                "parameters": tool.get("function", {}).get("parameters", {}),
+            }
+            for tool in tools
+        ]
 
     def format_tool_choice(
         self, tool_choice: Optional[Union[str, Dict]]

@@ -1,4 +1,5 @@
 """Sendable content types for Feishu messages."""
+
 from abc import ABC
 from typing import Optional
 
@@ -27,8 +28,12 @@ class FileContent(Sendable):
     """A file to upload and send."""
 
     file_path: str = Field(..., description="Absolute path to the file")
-    file_type: str = Field(..., description="File type: opus, mp3, wav, mp4, pdf, doc, etc.")
-    file_name: Optional[str] = Field(default=None, description="Display name, defaults to basename of file_path")
+    file_type: str = Field(
+        ..., description="File type: opus, mp3, wav, mp4, pdf, doc, etc."
+    )
+    file_name: Optional[str] = Field(
+        default=None, description="Display name, defaults to basename of file_path"
+    )
 
 
 class AudioContent(FileContent):

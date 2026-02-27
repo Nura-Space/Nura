@@ -6,7 +6,6 @@ from nura.core.exceptions import ToolError
 from nura.tool.base import BaseTool, CLIResult
 from nura.core.logger import logger
 
-
 _BASH_DESCRIPTION = """Execute a bash command in the terminal.
 * Long running commands: For commands that may run indefinitely, it should be run in the background and the output should be redirected to a file, e.g. command = `python3 app.py > server.log 2>&1 &`.
 * Interactive: If a bash command returns exit code `-1`, this means the process is not yet finished. The assistant must then send a second call to terminal with an empty `command` (which will retrieve any additional logs), or it can send additional text (set `command` to the text) to STDIN of the running process, or it can send command=`ctrl+c` to interrupt the process.
@@ -94,10 +93,14 @@ class _BashSession:
                             f"{self._process.returncode} (likely caused by `exit` "
                             f"in the command). Session will auto-restart."
                         )
-                        output = self._process.stdout._buffer.decode()  # pyright: ignore[reportAttributeAccessIssue]
+                        output = (
+                            self._process.stdout._buffer.decode()
+                        )  # pyright: ignore[reportAttributeAccessIssue]
                         if self._sentinel in output:
                             output = output[: output.index(self._sentinel)]
-                        error = self._process.stderr._buffer.decode()  # pyright: ignore[reportAttributeAccessIssue]
+                        error = (
+                            self._process.stderr._buffer.decode()
+                        )  # pyright: ignore[reportAttributeAccessIssue]
                         self._started = False  # mark dead so Bash.execute() restarts it
                         return CLIResult(
                             output=output.strip(),

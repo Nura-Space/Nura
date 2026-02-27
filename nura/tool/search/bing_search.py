@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from loguru import logger
 from nura.tool.search.base import SearchItem, WebSearchEngine
 
-
 ABSTRACT_MAX_LENGTH = 300
 
 USER_AGENTS = [

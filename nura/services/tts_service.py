@@ -11,6 +11,7 @@ from nura.services.tts import TTSService
 
 class VolcengineTTS(TTSService):
     """Volcengine TTS implementation using the Ark API"""
+
     def __init__(self, config):
         self.config = config.get("tts_config", {})
         self.appid = self.config.get("appid")
@@ -20,7 +21,9 @@ class VolcengineTTS(TTSService):
         self.api_url = self.config.get("api_url")
         self.header = {"Authorization": f"Bearer;{self.access_token}"}
 
-    async def generate_audio(self, text: str, output_path: str = "output.mp3") -> Optional[str]:
+    async def generate_audio(
+        self, text: str, output_path: str = "output.mp3"
+    ) -> Optional[str]:
         """
         Generate MP3 audio from text using Volcengine TTS API
         Returns the path to the generated MP3 file
@@ -29,11 +32,9 @@ class VolcengineTTS(TTSService):
             "app": {
                 "appid": self.appid,
                 "token": "access_token",
-                "cluster": self.cluster
+                "cluster": self.cluster,
             },
-            "user": {
-                "uid": "388808087185088"
-            },
+            "user": {"uid": "388808087185088"},
             "audio": {
                 "voice_type": self.voice_type,
                 "encoding": "mp3",
@@ -47,18 +48,18 @@ class VolcengineTTS(TTSService):
                 "text_type": "plain",
                 "operation": "query",
                 "with_frontend": 1,
-                "frontend_type": "unitTson"
-            }
+                "frontend_type": "unitTson",
+            },
         }
 
         try:
             response = await asyncio.to_thread(
-                requests.post, 
-                self.api_url, 
-                json.dumps(request_json), 
-                headers=self.header
+                requests.post,
+                self.api_url,
+                json.dumps(request_json),
+                headers=self.header,
             )
-            
+
             resp_json = response.json()
             if "data" in resp_json:
                 data = resp_json["data"]

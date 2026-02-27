@@ -1,5 +1,6 @@
 from nura.skill.manager import SkillManager
 
+
 # Export singleton access function
 def get_skill_manager() -> SkillManager:
     """Get the singleton SkillManager instance."""

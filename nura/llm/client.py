@@ -1,4 +1,5 @@
 """LLM client module."""
+
 from typing import Any, Dict, List, Optional, Union
 
 import tiktoken
@@ -368,10 +369,10 @@ class LLM:
             # Re-raise token limit errors without logging
             raise
         except ValueError:
-            logger.exception(f"Validation error")
+            logger.exception("Validation error")
             raise
         except OpenAIError as oe:
-            logger.exception(f"OpenAI API error")
+            logger.exception("OpenAI API error")
             if isinstance(oe, AuthenticationError):
                 logger.error("Authentication failed. Check API key.")
             elif isinstance(oe, RateLimitError):
@@ -380,7 +381,7 @@ class LLM:
                 logger.error(f"API error: {oe}")
             raise
         except Exception:
-            logger.exception(f"Unexpected error in ask")
+            logger.exception("Unexpected error in ask")
             raise
 
     @retry(
@@ -441,9 +442,7 @@ class LLM:
             multimodal_content = (
                 [{"type": "text", "text": content}]
                 if isinstance(content, str)
-                else content
-                if isinstance(content, list)
-                else []
+                else content if isinstance(content, list) else []
             )
 
             # Add images to content
@@ -590,7 +589,7 @@ class LLM:
                     tools=tools,
                     tool_choice=tool_choice,
                     temperature=temperature,
-                    session_id=session_id
+                    session_id=session_id,
                 )
 
             # Check if the model supports images

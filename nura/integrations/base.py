@@ -4,6 +4,7 @@ Abstract base bot for messaging platforms.
 This module provides the BaseBot abstract class that contains common logic
 for all messaging platform integrations (Feishu, Discord, Telegram, etc.).
 """
+
 import asyncio
 import signal
 import threading
@@ -96,6 +97,7 @@ class BaseBot(ABC):
             Configuration dictionary
         """
         import json
+
         try:
             with open(config_path, "r") as f:
                 return json.load(f)
@@ -121,16 +123,19 @@ class BaseBot(ABC):
             credentials = self._get_platform_credentials(config)
             if credentials:
                 client = ClientFactory.get_client(platform_name)
-                if hasattr(client, 'initialize'):
+                if hasattr(client, "initialize"):
                     client.initialize(**credentials)
 
                 # Setup emoji functions if available
-                if hasattr(client, 'set_emoji_functions'):
+                if hasattr(client, "set_emoji_functions"):
                     from nura.integrations.feishu.emoji import load_emoji_functions
+
                     emoji_functions = load_emoji_functions()
                     client.set_emoji_functions(emoji_functions)
 
-                logger.info(f"{platform_name.capitalize()} messaging client initialized")
+                logger.info(
+                    f"{platform_name.capitalize()} messaging client initialized"
+                )
 
     async def setup_tts_service(self, config: dict) -> None:
         """Setup TTS service if enabled in configuration.
@@ -147,10 +152,11 @@ class BaseBot(ABC):
 
         try:
             from nura.services.tts_service import VolcengineTTS
+
             tts_service = VolcengineTTS({"tts_config": tts_config})
 
             client = ClientFactory.get_client(platform_name)
-            if hasattr(client, 'set_tts_service'):
+            if hasattr(client, "set_tts_service"):
                 client.set_tts_service(tts_service, enable_voice)
                 logger.info(f"TTS service enabled for {platform_name}")
         except Exception as e:
@@ -166,16 +172,19 @@ class BaseBot(ABC):
             System prompt string
         """
         import os
+
         system_prompt = ""
 
         profile_path = config.get("profile_path", "")
         if profile_path and os.path.exists(profile_path):
             from nura.prompts import build_roleplay_prompt
+
             system_prompt = build_roleplay_prompt(profile_path)
             logger.info(f"Loaded system prompt from {profile_path}")
 
         # Build skills summary and append to system prompt
         from nura.skill import get_skill_manager
+
         skills_manager = get_skill_manager()
         skills_manager.load_skills()
         skills_summary = skills_manager.build_skills_summary(lang="zh")
@@ -201,10 +210,7 @@ class BaseBot(ABC):
         return event_queue
 
     async def initialize_agent(
-        self,
-        config: dict,
-        event_queue: EventQueue,
-        system_prompt: str
+        self, config: dict, event_queue: EventQueue, system_prompt: str
     ) -> EventDrivenAgent:
         """Initialize the event-driven agent.
 
@@ -222,7 +228,7 @@ class BaseBot(ABC):
             max_tokens=128000,
             compress_threshold=0.5,
             keep_turns=10,
-            compress_cooldown=60
+            compress_cooldown=60,
         )
 
         agent = EventDrivenAgent(
@@ -230,7 +236,7 @@ class BaseBot(ABC):
             system_prompt=system_prompt,
             message_collect_seconds=message_collect_seconds,
             debounce_seconds=0.5,
-            context_config=context_config
+            context_config=context_config,
         )
 
         logger.info("Agent initialized successfully")
@@ -255,8 +261,7 @@ class BaseBot(ABC):
 
         # Start platform client in a separate thread
         platform_thread = threading.Thread(
-            target=self.start_platform_client,
-            daemon=True
+            target=self.start_platform_client, daemon=True
         )
         platform_thread.start()
 
@@ -279,10 +284,12 @@ class BaseBot(ABC):
 
         logger.info("Shutdown complete")
         import sys
+
         sys.exit(0)
 
     def _setup_signal_handlers(self) -> None:
         """Setup signal handlers for graceful shutdown."""
+
         def signal_handler(sig, frame):
             logger.info("Shutting down gracefully...")
             if self._shutdown_event:

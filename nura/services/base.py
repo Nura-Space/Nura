@@ -1,4 +1,5 @@
 """Abstract base client interface for messaging platforms."""
+
 from abc import ABC
 from typing import Optional, Dict, Type, TYPE_CHECKING
 

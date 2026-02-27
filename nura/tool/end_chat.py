@@ -1,7 +1,7 @@
 """EndChat tool for ending the conversation with the user."""
+
 from nura.tool.base import BaseTool, ToolResult
 from loguru import logger
-
 
 _ENDCHAT_DESCRIPTION = """End the current chat session with the user.
 Use this tool when the conversation is complete or the user indicates they want to end the chat.

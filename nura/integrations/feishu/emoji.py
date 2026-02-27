@@ -1,4 +1,5 @@
 """Emoji support for Feishu integration."""
+
 import json
 import os
 from loguru import logger
@@ -18,7 +19,7 @@ def load_emoji_functions(emoji_path: str = None) -> dict:
         possible_paths = [
             "bot/asset/emoji.json",
             "examples/feishu_bot/emoji.json",
-            "../emoji.json"
+            "../emoji.json",
         ]
         for path in possible_paths:
             if os.path.exists(path):

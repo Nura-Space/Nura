@@ -11,7 +11,6 @@ from nura.agent.prompts.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from nura.core.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
 from nura.tool import Bash, CreateChatCompletion, Terminate, ToolCollection
 
-
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
 
 

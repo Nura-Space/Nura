@@ -1,4 +1,5 @@
 """Prompt template utilities."""
+
 import os
 from pathlib import Path
 from typing import Any
@@ -80,7 +81,7 @@ def build_roleplay_prompt(profile_path: str) -> str:
             "style": style,
             "world": world,
             "relations": relations,
-            "notes": notes
+            "notes": notes,
         },
-        language=language
+        language=language,
     )

@@ -1,4 +1,5 @@
 """Global FeishuClient singleton for sending messages and files."""
+
 import asyncio
 import json
 import os
@@ -8,7 +9,7 @@ import builtins
 import lark_oapi as lark
 from loguru import logger
 
-from nura.services.base import BaseClient
+from nura.services.base import BaseClient, ClientFactory
 from nura.services.messaging import MessagingService
 from nura.services.sendable import Sendable, TextContent, FileContent, AudioContent
 from nura.services import TTSService
@@ -63,11 +64,13 @@ class FeishuClient(BaseClient, MessagingService):
             logger.error("Feishu App ID or Secret not provided")
             return
 
-        self._client = lark.Client.builder() \
-            .app_id(app_id) \
-            .app_secret(app_secret) \
-            .log_level(lark.LogLevel.INFO) \
+        self._client = (
+            lark.Client.builder()
+            .app_id(app_id)
+            .app_secret(app_secret)
+            .log_level(lark.LogLevel.INFO)
             .build()
+        )
 
         logger.info("FeishuClient initialized")
 
@@ -118,23 +121,33 @@ class FeishuClient(BaseClient, MessagingService):
 
         content_json = json.dumps({"text": text})
 
-        request = lark.im.v1.CreateMessageRequest.builder() \
-            .receive_id_type("chat_id") \
-            .request_body(lark.im.v1.CreateMessageRequestBody.builder()
+        request = (
+            lark.im.v1.CreateMessageRequest.builder()
+            .receive_id_type("chat_id")
+            .request_body(
+                lark.im.v1.CreateMessageRequestBody.builder()
                 .receive_id(target_id)
                 .msg_type("text")
                 .content(content_json)
-                .build()) \
+                .build()
+            )
             .build()
+        )
 
         try:
-            response = await asyncio.to_thread(self._client.im.v1.message.create, request)
+            response = await asyncio.to_thread(
+                self._client.im.v1.message.create, request
+            )
             if not response.success():
-                logger.error(f"Failed to send message: {response.code} - {response.msg}")
+                logger.error(
+                    f"Failed to send message: {response.code} - {response.msg}"
+                )
         except Exception as e:
             logger.error(f"Exception sending message: {e}")
 
-    async def send_file(self, conversation_id: str, file_path: str, file_type: str) -> None:
+    async def send_file(
+        self, conversation_id: str, file_path: str, file_type: str
+    ) -> None:
         """Send file (MessagingService interface).
 
         Args:
@@ -151,7 +164,9 @@ class FeishuClient(BaseClient, MessagingService):
         file_content = FileContent(file_path=file_path, file_type=file_type)
         await self._send_file_to_id(target_id, file_content)
 
-    async def send_audio(self, conversation_id: str, file_path: str, duration: int) -> None:
+    async def send_audio(
+        self, conversation_id: str, file_path: str, duration: int
+    ) -> None:
         """Send audio message (MessagingService interface).
 
         Args:
@@ -197,19 +212,27 @@ class FeishuClient(BaseClient, MessagingService):
 
         content_json = json.dumps({"text": text_content.text})
 
-        request = lark.im.v1.CreateMessageRequest.builder() \
-            .receive_id_type("chat_id") \
-            .request_body(lark.im.v1.CreateMessageRequestBody.builder()
+        request = (
+            lark.im.v1.CreateMessageRequest.builder()
+            .receive_id_type("chat_id")
+            .request_body(
+                lark.im.v1.CreateMessageRequestBody.builder()
                 .receive_id(self._chat_id)
                 .msg_type("text")
                 .content(content_json)
-                .build()) \
+                .build()
+            )
             .build()
+        )
 
         try:
-            response = await asyncio.to_thread(self._client.im.v1.message.create, request)
+            response = await asyncio.to_thread(
+                self._client.im.v1.message.create, request
+            )
             if not response.success():
-                logger.error(f"Failed to send message: {response.code} - {response.msg}")
+                logger.error(
+                    f"Failed to send message: {response.code} - {response.msg}"
+                )
         except Exception as e:
             logger.error(f"Exception sending message: {e}")
 
@@ -228,14 +251,18 @@ class FeishuClient(BaseClient, MessagingService):
             return
 
         content_json = json.dumps({"file_key": file_key})
-        request = lark.im.v1.CreateMessageRequest.builder() \
-            .receive_id_type("chat_id") \
-            .request_body(lark.im.v1.CreateMessageRequestBody.builder()
+        request = (
+            lark.im.v1.CreateMessageRequest.builder()
+            .receive_id_type("chat_id")
+            .request_body(
+                lark.im.v1.CreateMessageRequestBody.builder()
                 .receive_id(target_id)
                 .msg_type("audio")
                 .content(content_json)
-                .build()) \
+                .build()
+            )
             .build()
+        )
 
         response = await asyncio.to_thread(self._client.im.v1.message.create, request)
         if not response.success():
@@ -255,7 +282,7 @@ class FeishuClient(BaseClient, MessagingService):
         file_key = await self._upload_file(
             file_content.file_path,
             file_content.file_type,
-            None  # No duration for non-audio files
+            None,  # No duration for non-audio files
         )
         if not file_key:
             logger.error(f"Failed to upload file: {file_name}")
@@ -267,19 +294,27 @@ class FeishuClient(BaseClient, MessagingService):
             msg_type = "media"
 
         content_json = json.dumps({"file_key": file_key})
-        request = lark.im.v1.CreateMessageRequest.builder() \
-            .receive_id_type("chat_id") \
-            .request_body(lark.im.v1.CreateMessageRequestBody.builder()
+        request = (
+            lark.im.v1.CreateMessageRequest.builder()
+            .receive_id_type("chat_id")
+            .request_body(
+                lark.im.v1.CreateMessageRequestBody.builder()
                 .receive_id(target_id)
                 .msg_type(msg_type)
                 .content(content_json)
-                .build()) \
+                .build()
+            )
             .build()
+        )
         response = await asyncio.to_thread(self._client.im.v1.message.create, request)
         if not response.success():
-            logger.error(f"Failed to send file message: {response.code} - {response.msg}")
+            logger.error(
+                f"Failed to send file message: {response.code} - {response.msg}"
+            )
 
-    async def _upload_file(self, file_path: str, file_type: str, duration: int = None) -> Optional[str]:
+    async def _upload_file(
+        self, file_path: str, file_type: str, duration: int = None
+    ) -> Optional[str]:
         """Upload a file to Feishu and return the file_key.
 
         Args:
@@ -293,17 +328,21 @@ class FeishuClient(BaseClient, MessagingService):
         try:
             file = builtins.open(file_path, "rb")
 
-            builder = lark.im.v1.CreateFileRequestBody.builder() \
-                .file_type(file_type) \
-                .file_name(os.path.basename(file_path)) \
+            builder = (
+                lark.im.v1.CreateFileRequestBody.builder()
+                .file_type(file_type)
+                .file_name(os.path.basename(file_path))
                 .file(file)
+            )
 
             if duration is not None:
                 builder = builder.duration(duration)
 
-            request = lark.im.v1.CreateFileRequest.builder() \
-                .request_body(builder.build()) \
+            request = (
+                lark.im.v1.CreateFileRequest.builder()
+                .request_body(builder.build())
                 .build()
+            )
 
             response = await asyncio.to_thread(self._client.im.v1.file.create, request)
             if response.success():
@@ -333,26 +372,36 @@ class FeishuClient(BaseClient, MessagingService):
             import concurrent.futures
 
             def _download():
-                logger.info(f"Downloading image with key: {image_key}, message_id: {message_id}")
+                logger.info(
+                    f"Downloading image with key: {image_key}, message_id: {message_id}"
+                )
 
                 # Use message_resource API to download user-sent images
-                request = lark.im.v1.GetMessageResourceRequest.builder() \
-                    .message_id(message_id or "") \
-                    .file_key(image_key) \
-                    .type("image") \
+                request = (
+                    lark.im.v1.GetMessageResourceRequest.builder()
+                    .message_id(message_id or "")
+                    .file_key(image_key)
+                    .type("image")
                     .build()
+                )
 
                 response = self._client.im.v1.message_resource.get(request)
-                logger.info(f"Image download response: success={response.success()}, code={response.code if hasattr(response, 'code') else 'N/A'}")
+                logger.info(
+                    f"Image download response: success={response.success()}, code={response.code if hasattr(response, 'code') else 'N/A'}"
+                )
                 return response
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 response = executor.submit(_download).result()
 
             if not response.success():
-                logger.error(f"Failed to download image: {response.code} - {response.msg}")
+                logger.error(
+                    f"Failed to download image: {response.code} - {response.msg}"
+                )
                 return b""
-            logger.info(f"Image downloaded successfully, file_name: {response.file_name if hasattr(response, 'file_name') else 'unknown'}")
+            logger.info(
+                f"Image downloaded successfully, file_name: {response.file_name if hasattr(response, 'file_name') else 'unknown'}"
+            )
             return response.file.read()
         except Exception as e:
             logger.error(f"Exception downloading image: {e}")
@@ -361,7 +410,6 @@ class FeishuClient(BaseClient, MessagingService):
 
 # Module-level singleton accessor
 # Register this client class to factory (for backward compatibility)
-from nura.services.base import ClientFactory
 ClientFactory.register("feishu", FeishuClient)
 
 # Module-level client instance (backward compatibility)

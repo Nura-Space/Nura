@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from nura.llm import LLM
 from nura.core.logger import logger
+
 try:
     from nura.sandbox.client import SANDBOX_CLIENT
 except ImportError:
@@ -24,7 +25,10 @@ class BaseAgent(BaseModel, ABC):
     # Core attributes
     name: str = Field(..., description="Unique name of the agent")
     description: Optional[str] = Field(None, description="Optional agent description")
-    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Session ID for context caching")
+    session_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Session ID for context caching",
+    )
 
     # Prompts
     system_prompt: Optional[str] = Field(

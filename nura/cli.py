@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Nura CLI - Command-line interface for Nura platform."""
+
 import click
 import json
 import asyncio
@@ -21,6 +22,7 @@ def run(config, platform):
 
     if platform == "feishu":
         from nura.integrations.feishu.bot import run_feishu_bot
+
         asyncio.run(run_feishu_bot(cfg))
     else:
         click.echo(f"Platform {platform} not supported yet")

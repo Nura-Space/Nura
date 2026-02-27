@@ -1,4 +1,5 @@
 """Abstract TTS service interface."""
+
 from abc import ABC, abstractmethod
 from typing import Optional
 

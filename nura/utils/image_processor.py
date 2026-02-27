@@ -1,4 +1,5 @@
 """Image processing utilities for agent vision capabilities."""
+
 import base64
 from io import BytesIO
 from typing import Optional
@@ -54,7 +55,10 @@ class ImageProcessor:
                 img = img.convert("RGB")
 
             width, height = img.size
-            if width > ImageProcessor.MAX_DIMENSION or height > ImageProcessor.MAX_DIMENSION:
+            if (
+                width > ImageProcessor.MAX_DIMENSION
+                or height > ImageProcessor.MAX_DIMENSION
+            ):
                 scale = ImageProcessor.MAX_DIMENSION / max(width, height)
                 new_size = (int(width * scale), int(height * scale))
                 img = img.resize(new_size, Image.LANCZOS)

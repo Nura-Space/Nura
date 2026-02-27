@@ -1,4 +1,5 @@
 """Skill queue module for Nura."""
+
 import asyncio
 from enum import Enum
 from typing import Optional, Callable, Awaitable, TYPE_CHECKING
@@ -20,6 +21,7 @@ class SkillStatus(Enum):
 @dataclass
 class SkillTask:
     """Skill task to be executed."""
+
     skill_name: str
     user_input: str
     session_id: str = ""
@@ -37,7 +39,9 @@ class SkillQueue:
         self._active_count: int = 0
         self._on_complete: Optional[Callable[[SkillTask], Awaitable[None]]] = None
 
-    def set_complete_callback(self, callback: Callable[[SkillTask], Awaitable[None]]) -> None:
+    def set_complete_callback(
+        self, callback: Callable[[SkillTask], Awaitable[None]]
+    ) -> None:
         """Set callback for when skill completes."""
         self._on_complete = callback
 
@@ -112,6 +116,7 @@ class SkillWorker:
         self._semaphore = asyncio.Semaphore(self.max_concurrency)
         self._worker_task = asyncio.create_task(self._run())
         from nura.core.logger import logger
+
         logger.info(f"SkillWorker started with max_concurrency={self.max_concurrency}")
 
     async def stop(self) -> None:
@@ -124,6 +129,7 @@ class SkillWorker:
             except asyncio.CancelledError:
                 pass
         from nura.core.logger import logger
+
         logger.info("SkillWorker stopped")
 
     async def _run(self) -> None:
@@ -164,6 +170,7 @@ class SkillWorker:
                 else:
                     # Run the skill using SkillRunner
                     from nura.skill.runner import SkillRunner
+
                     result = await SkillRunner.run_skill(skill, task.user_input)
                     task.status = SkillStatus.COMPLETED
                     task.result = result
@@ -184,7 +191,9 @@ class SkillWorker:
                 # Call completion callback if set
                 if self.queue._on_complete:
                     try:
-                        logger.info(f"Calling skill complete callback for {task.skill_name}")
+                        logger.info(
+                            f"Calling skill complete callback for {task.skill_name}"
+                        )
                         await self.queue._on_complete(task)
                     except Exception as e:
                         logger.error(f"Complete callback error: {e}")
@@ -198,7 +207,9 @@ _skill_worker: Optional[SkillWorker] = None
 _skill_queue: Optional[SkillQueue] = None
 
 
-def get_skill_worker(queue: Optional[SkillQueue] = None, max_concurrency: int = 1) -> SkillWorker:
+def get_skill_worker(
+    queue: Optional[SkillQueue] = None, max_concurrency: int = 1
+) -> SkillWorker:
     """Get the global skill worker instance."""
     global _skill_worker
     if _skill_worker is None:

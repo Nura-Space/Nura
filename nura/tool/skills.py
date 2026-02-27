@@ -30,7 +30,9 @@ class Skills(BaseTool):
     model_config = ConfigDict(extra="allow")
 
     name: str = "skills"
-    description: str = "Execute a skill to perform specific tasks. Use this tool when you need to use a skill."
+    description: str = (
+        "Execute a skill to perform specific tasks. Use this tool when you need to use a skill."
+    )
     parameters: dict = {
         "type": "object",
         "properties": {
@@ -50,7 +52,9 @@ class Skills(BaseTool):
         super().__init__(**data)
         self._skill_queue = get_skill_queue()
 
-    async def execute(self, skill_name: str, user_input: str, blocking: bool = None) -> Any:
+    async def execute(
+        self, skill_name: str, user_input: str, blocking: bool = None
+    ) -> Any:
         """Execute skill - either blocking or non-blocking based on skill configuration.
 
         Args:
@@ -71,7 +75,11 @@ class Skills(BaseTool):
             )
 
         if not skill.available:
-            missing = skill_manager._get_missing_requirements(skill.requires) if skill.requires else "unknown"
+            missing = (
+                skill_manager._get_missing_requirements(skill.requires)
+                if skill.requires
+                else "unknown"
+            )
             return self.fail_response(
                 f"Skill '{skill_name}' is not available. Missing requirements: {missing}"
             )
@@ -119,6 +127,4 @@ class Skills(BaseTool):
                 f"请继续聊天，稍后即可收到结果。"
             )
         else:
-            return self.fail_response(
-                f"Skill queue is busy, please try again later."
-            )
+            return self.fail_response("Skill queue is busy, please try again later.")

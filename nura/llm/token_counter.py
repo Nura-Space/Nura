@@ -1,4 +1,5 @@
 """Token counting utilities for LLM messages."""
+
 import math
 from typing import List, Union
 

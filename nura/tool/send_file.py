@@ -1,4 +1,5 @@
 """SendFile tool for sending files to the user via platform client."""
+
 import os
 import tempfile
 import uuid
@@ -13,9 +14,12 @@ from nura.tool.base import BaseTool, ToolResult
 def _get_client():
     """Get the current platform client."""
     from nura.services.base import ClientFactory
+
     client = ClientFactory.get_current_client()
     if not client:
-        raise RuntimeError("No platform client configured. Call ClientFactory.set_current_platform() first.")
+        raise RuntimeError(
+            "No platform client configured. Call ClientFactory.set_current_platform() first."
+        )
     return client
 
 
@@ -32,7 +36,9 @@ class SendFile(BaseTool):
     """
 
     name: str = "send_file"
-    description: str = "发送文件给用户。支持音频(.wav, .mp3, .opus)、视频(.mp4)和其他文件类型。当技能生成了需要发送给用户的文件时使用。"
+    description: str = (
+        "发送文件给用户。支持音频(.wav, .mp3, .opus)、视频(.mp4)和其他文件类型。当技能生成了需要发送给用户的文件时使用。"
+    )
     parameters: dict = {
         "type": "object",
         "properties": {
@@ -86,7 +92,7 @@ class SendFile(BaseTool):
             # Get audio duration
             duration = await get_audio_duration(file_path)
             if duration is None:
-                logger.warning(f"Failed to get audio duration, using 0")
+                logger.warning("Failed to get audio duration, using 0")
                 duration = 0
             logger.info(f"Got audio duration: {duration}ms for {file_name}")
 
@@ -100,29 +106,27 @@ class SendFile(BaseTool):
                         file_path=opus_path,
                         file_type="opus",
                         file_name=file_name,
-                        duration=duration
+                        duration=duration,
                     )
                 else:
                     logger.error("OPUS conversion failed")
-                    return self.fail_response(f"音频格式转换失败")
+                    return self.fail_response("音频格式转换失败")
             else:
                 # Already opus, no conversion needed
                 sendable = AudioContent(
                     file_path=file_path,
                     file_type="opus",
                     file_name=file_name,
-                    duration=duration
+                    duration=duration,
                 )
         else:
             # Non-audio files
             sendable = FileContent(
-                file_path=file_path,
-                file_type=file_type,
-                file_name=file_name
+                file_path=file_path, file_type=file_type, file_name=file_name
             )
 
         if not sendable:
-            return self.fail_response(f"无法创建发送内容")
+            return self.fail_response("无法创建发送内容")
 
         try:
             await client.send(sendable)

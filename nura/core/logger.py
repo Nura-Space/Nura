@@ -5,7 +5,6 @@ from loguru import logger as _logger
 
 from nura.core.config import PROJECT_ROOT
 
-
 _print_level = "INFO"
 
 

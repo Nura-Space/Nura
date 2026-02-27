@@ -1,4 +1,5 @@
 """Message formatting utilities for LLM providers."""
+
 from typing import List, Union
 
 from nura.core.schema import ROLE_VALUES, Message
@@ -46,9 +47,7 @@ def format_messages(
                 if not message.get("content"):
                     message["content"] = []
                 elif isinstance(message["content"], str):
-                    message["content"] = [
-                        {"type": "text", "text": message["content"]}
-                    ]
+                    message["content"] = [{"type": "text", "text": message["content"]}]
                 elif isinstance(message["content"], list):
                     # Convert string items to proper text objects
                     message["content"] = [

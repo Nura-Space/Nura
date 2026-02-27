@@ -1,4 +1,5 @@
 """Configuration for context management (turn-based compression)."""
+
 from dataclasses import dataclass
 
 
@@ -11,6 +12,7 @@ class ContextConfig:
     - Keep recent 10 conversation turns (not messages)
     - Compress everything before the 10th turn using LLM summarization
     """
+
     # Context window size
     max_tokens: int = 128000
 

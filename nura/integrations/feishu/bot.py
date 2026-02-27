@@ -4,7 +4,7 @@ Feishu Bot for Nura - Event-driven chat agent.
 This module provides the main entry point for the Feishu integration.
 No path patching needed - all imports are clean Nura imports.
 """
-import asyncio
+
 import json
 import warnings
 import uuid
@@ -13,15 +13,15 @@ from typing import Any
 import lark_oapi as lark
 from loguru import logger
 
-# Suppress pydantic warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
-
 # Nura imports - clean and simple
 from nura.event import Event, EventType
 from nura.services.base import ClientFactory
 from nura.integrations.base import BaseBot
 from nura.integrations.feishu.client import FeishuClient
 from nura.utils.image_processor import ImageProcessor
+
+# Suppress pydantic warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 
 # Global components (for backward compatibility with event handler)
@@ -54,7 +54,9 @@ def do_p2_im_message_receive_v1(data: lark.im.v1.P2ImMessageReceiveV1) -> None:
 
             # Get message_id from event data
             message_id = message_data.get("message_id", "")
-            logger.info(f"Processing image message: {image_key}, message_id: {message_id}")
+            logger.info(
+                f"Processing image message: {image_key}, message_id: {message_id}"
+            )
 
             # Download and process image - run in thread to avoid event loop issues
             def download_and_process_image():
@@ -77,7 +79,7 @@ def do_p2_im_message_receive_v1(data: lark.im.v1.P2ImMessageReceiveV1) -> None:
             try:
                 content_json = json.loads(msg_content)
                 text_content = content_json.get("text", "")
-            except:
+            except Exception:
                 text_content = msg_content
 
         chat_id = message_data.get("chat_id", "")
@@ -99,7 +101,7 @@ def do_p2_im_message_receive_v1(data: lark.im.v1.P2ImMessageReceiveV1) -> None:
             id=str(uuid.uuid4()),
             type=EventType.MAIN,
             data=event_data_dict,
-            conversation_id=chat_id
+            conversation_id=chat_id,
         )
 
         # Thread-safe put
@@ -115,10 +117,12 @@ def do_message_event(data: lark.CustomizedEvent) -> None:
 
 
 # Build event dispatcher handler
-_event_handler = lark.EventDispatcherHandler.builder("", "") \
-    .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1) \
-    .register_p1_customized_event("im.message.receive_v1", do_message_event) \
+_event_handler = (
+    lark.EventDispatcherHandler.builder("", "")
+    .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1)
+    .register_p1_customized_event("im.message.receive_v1", do_message_event)
     .build()
+)
 
 
 class FeishuBot(BaseBot):
@@ -164,9 +168,7 @@ class FeishuBot(BaseBot):
         self._system_prompt = await self.build_system_prompt(config)
         self._event_queue = await self.initialize_event_queue(config)
         self._agent = await self.initialize_agent(
-            config,
-            self._event_queue,
-            self._system_prompt
+            config, self._event_queue, self._system_prompt
         )
 
         # Set global lane_queue for event handler (backward compatibility)
@@ -187,7 +189,7 @@ class FeishuBot(BaseBot):
             app_id=self._app_id,
             app_secret=self._app_secret,
             event_handler=self.get_event_handler(),
-            log_level=lark.LogLevel.INFO
+            log_level=lark.LogLevel.INFO,
         )
         try:
             cli.start()
@@ -206,7 +208,7 @@ class FeishuBot(BaseBot):
         """Get Feishu-specific credentials."""
         return {
             "app_id": config.get("feishu_app_id", ""),
-            "app_secret": config.get("feishu_app_secret", "")
+            "app_secret": config.get("feishu_app_secret", ""),
         }
 
 
