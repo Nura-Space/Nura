@@ -23,11 +23,14 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Install dependencies
-        run: uv pip install --system -e ".[all]"
+        run: uv pip install -e ".[all]"
 
       - name: Install dev dependencies
-        run: uv pip install --system -r requirements-dev.txt
+        run: uv pip install -r requirements-dev.txt
 
       - name: Run unit tests
         run: uv run pytest tests/unit -v -m unit
@@ -51,11 +54,14 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Install dependencies
-        run: uv pip install --system -e ".[all]"
+        run: uv pip install -e ".[all]"
 
       - name: Install dev dependencies
-        run: uv pip install --system -r requirements-dev.txt
+        run: uv pip install -r requirements-dev.txt
 
       - name: Run ruff
         run: uv run ruff check nura/
