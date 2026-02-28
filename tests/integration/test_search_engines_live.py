@@ -73,6 +73,7 @@ def test_bing_search_with_chinese_query():
 
 
 @pytest.mark.integration
+@pytest.mark.live
 def test_google_search_basic():
     """Test Google search with real API."""
     engine = GoogleSearchEngine()
@@ -84,6 +85,7 @@ def test_google_search_basic():
 
 
 @pytest.mark.integration
+@pytest.mark.live
 def test_duckduckgo_search_basic():
     """Test DuckDuckGo search with real API."""
     engine = DuckDuckGoSearchEngine()

@@ -102,13 +102,10 @@ class SkillManager:
                         continue
                     self.skills[skill.name] = skill
                     logger.info(
-                        "Loaded skill",
-                        name=skill.name,
-                        path=str(file_path),
-                        source=source,
+                        f"Loaded skill [{skill.name}] from [{source}] path: {str(file_path)}"
                     )
             except Exception as e:
-                logger.error("Failed to load skill", path=str(file_path), error=str(e))
+                logger.error(f"Failed to load skill from {str(file_path)}, {str(e)}")
 
     def get_skill(self, name: str) -> Optional[Skill]:
         """
