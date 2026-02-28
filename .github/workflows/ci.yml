@@ -47,10 +47,18 @@ jobs:
           command: uv pip install -r requirements-dev.txt
 
       - name: Run unit tests
-        run: uv run pytest tests/unit -v -m unit
+        run: uv run pytest tests/unit -v -m unit --cov=nura --cov-report=xml
 
       - name: Run integration tests
         run: uv run pytest tests/integration -v -m "integration and not live"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
   lint:
     runs-on: ubuntu-latest
