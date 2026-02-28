@@ -37,11 +37,11 @@ poetry.lock
 .coverage
 coverage.json
 coverage_output.txt
-.coveragerc
 htmlcov/
 .tox/
 .nox/
 TEST_COVERAGE_REPORT.md
+output.mp3
 
 # IDE
 .vscode/

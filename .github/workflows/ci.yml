@@ -8,7 +8,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Checkout repository
@@ -27,16 +31,32 @@ jobs:
         run: uv venv
 
       - name: Install dependencies
-        run: uv pip install -e ".[all]"
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          shell: bash
+          command: uv pip install -e ".[all]"
 
       - name: Install dev dependencies
-        run: uv pip install -r requirements-dev.txt
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          shell: bash
+          command: uv pip install -r requirements-dev.txt
 
-      - name: Run unit tests
-        run: uv run pytest tests/unit -v -m unit
+      - name: Run tests
+        run: |
+          uv run pytest tests/unit tests/integration -v --cov=nura --cov-report=xml
 
-      - name: Run integration tests
-        run: uv run pytest tests/integration -v -m "integration and not live"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
   lint:
     runs-on: ubuntu-latest
@@ -69,6 +89,49 @@ jobs:
       - name: Run black
         run: uv run black --check nura/
 
-      # mypy disabled for now - many type stubs missing
-      # - name: Run mypy
-      #   run: uv run mypy nura/
+  mypy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[all]"
+
+      - name: Install dev dependencies
+        run: uv pip install -r requirements-dev.txt
+
+      - name: Install mypy and stubs
+        run: uv pip install mypy types-requests types-PyYAML types-docker
+
+      - name: Run mypy on core modules
+        run: |
+          uv run mypy --ignore-missing-imports \
+            --disable-error-code=override \
+            --disable-error-code=assignment \
+            --disable-error-code=return-value \
+            --disable-error-code=arg-type \
+            --disable-error-code=index \
+            --disable-error-code=union-attr \
+            --disable-error-code=call-arg \
+            --disable-error-code=var-annotated \
+            --disable-error-code=operator \
+            --disable-error-code=misc \
+            --disable-error-code=no-redef \
+            --disable-error-code=attr-defined \
+            --disable-error-code=call-overload \
+            --disable-error-code=dict-item \
+            nura/core nura/event nura/context

@@ -49,8 +49,15 @@ test-watch:
 test-parallel:
 	uv run pytest tests/unit tests/integration -n auto
 
-# Clean build artifacts
+# Clean build artifacts and old logs (logs older than 7 days)
 clean:
-	rm -rf build/ dist/ *.egg-info htmlcov/ .pytest_cache/ .coverage
+	rm -rf build/ dist/ htmlcov/ .mypy_cache/ .pytest_cache/ .ruff_cache/
+	rm -f *.egg-info .coverage coverage.json coverage_output.txt output.mp3
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
+	find . -type f -name ".DS_Store" -delete
+	@if [ -d logs/ ]; then \
+		echo "Cleaning logs older than 7 days..."; \
+		find logs/ -type f -mtime +7 -delete; \
+		find logs/ -type d -empty -delete; \
+	fi
