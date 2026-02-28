@@ -8,7 +8,17 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.10', '3.11', '3.12']
+        exclude:
+          - os: macos-latest
+            python-version: '3.10'
+          - os: windows-latest
+            python-version: '3.10'
 
     steps:
       - name: Checkout repository
@@ -21,7 +31,7 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
 
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Create virtual environment
         run: uv venv
@@ -69,6 +79,34 @@ jobs:
       - name: Run black
         run: uv run black --check nura/
 
-      # mypy disabled for now - many type stubs missing
-      # - name: Run mypy
-      #   run: uv run mypy nura/
+  mypy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[all]"
+
+      - name: Install dev dependencies
+        run: uv pip install -r requirements-dev.txt
+
+      - name: Install mypy
+        run: uv pip install mypy
+
+      - name: Run mypy on core modules
+        run: |
+          uv run mypy nura/core nura/llm nura/event nura/context nura/tool
