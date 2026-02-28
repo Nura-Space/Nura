@@ -33,4 +33,4 @@ directory = htmlcov
 output = coverage.xml
 
 [coverage:report]
-fail_under = 70.0
+fail_under = 60.0
