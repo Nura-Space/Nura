@@ -186,6 +186,7 @@ class TestBashSession:
         assert session._sentinel == "<<exit>>"
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(__import__("sys").platform == "win32", reason="os.setsid is Unix-only")
     async def test_session_start(self):
         """Test starting a session."""
         session = _BashSession()
