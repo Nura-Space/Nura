@@ -31,10 +31,12 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
 
       - name: Set up Python
-        run: uv python install ${{ matrix.python-version }}
+        run: |
+          uv python install ${{ matrix.python-version }}
+          echo "PATH=$HOME/.local/share/uv/python/cpython-${{ matrix.python-version }}.$(echo ${{ matrix.python-version }} | tr '.' '-')/bin:$PATH" >> $GITHUB_ENV
 
       - name: Create virtual environment
-        run: uv venv
+        run: uv venv --python ${{ matrix.python-version }}
 
       - name: Install dependencies
         uses: nick-fields/retry@v3
