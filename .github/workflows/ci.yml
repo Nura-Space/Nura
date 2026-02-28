@@ -1,0 +1,74 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[all]"
+
+      - name: Install dev dependencies
+        run: uv pip install -r requirements-dev.txt
+
+      - name: Run unit tests
+        run: uv run pytest tests/unit -v -m unit
+
+      - name: Run integration tests
+        run: uv run pytest tests/integration -v -m "integration and not live"
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[all]"
+
+      - name: Install dev dependencies
+        run: uv pip install -r requirements-dev.txt
+
+      - name: Run ruff
+        run: uv run ruff check nura/
+
+      - name: Run black
+        run: uv run black --check nura/
+
+      # mypy disabled for now - many type stubs missing
+      # - name: Run mypy
+      #   run: uv run mypy nura/
