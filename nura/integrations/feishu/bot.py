@@ -18,6 +18,9 @@ from nura.event import Event, EventType
 from nura.services.base import ClientFactory
 from nura.integrations.base import BaseBot
 from nura.integrations.feishu.client import FeishuClient
+from nura.config import get_config, ConfigManager
+from nura.config.loader import load_json  # For backward compatibility
+from nura.utils import load_json_config
 from nura.utils.image_processor import ImageProcessor
 
 # Suppress pydantic warnings
@@ -213,13 +216,50 @@ class FeishuBot(BaseBot):
 
 
 def load_config(config_path: str) -> dict:
-    """Load configuration from JSON file."""
-    try:
-        with open(config_path, "r") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load config from {config_path}: {e}")
-        return {}
+    """Load configuration from JSON file.
+
+    DEPRECATED: Use load_platform_config() instead for new code.
+    This function is kept for backward compatibility.
+    """
+    return load_json_config(config_path)
+
+
+def load_platform_config() -> dict:
+    """Load Feishu platform configuration from the new config system.
+
+    This loads configuration from:
+    1. config/default.toml
+    2. config/platforms/feishu.toml (if exists)
+    3. Environment variables (FEISHU_*, VOLCENGINE_*)
+
+    Returns:
+        Configuration dictionary compatible with run_feishu_bot()
+    """
+    config = get_config(platform="feishu")
+
+    # Convert NuraConfig to the dict format expected by run_feishu_bot
+    feishu_config = {}
+
+    if config.platforms.feishu:
+        feishu = config.platforms.feishu
+        feishu_config["feishu_app_id"] = feishu.app_id
+        feishu_config["feishu_app_secret"] = feishu.app_secret
+        feishu_config["profile_path"] = feishu.profile_path
+        feishu_config["enable_voice_reply"] = feishu.enable_voice_reply
+        feishu_config["message_collect_seconds"] = feishu.message_collect_seconds
+
+        if feishu.memory_dir:
+            feishu_config["memory_dir"] = feishu.memory_dir
+
+        if feishu.tts:
+            feishu_config["tts_config"] = {
+                "access_token": feishu.tts.access_token,
+                "app_id": feishu.tts.app_id,
+                "cluster": feishu.tts.cluster,
+                "voice_type": feishu.tts.voice_type,
+            }
+
+    return feishu_config
 
 
 async def run_feishu_bot(config: dict):

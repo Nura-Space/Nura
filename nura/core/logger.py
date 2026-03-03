@@ -7,6 +7,38 @@ from nura.core.config import PROJECT_ROOT
 
 _print_level = "INFO"
 
+_context_log_file = None
+
+
+def get_context_logger():
+    """Get a file handle for writing complete context logs.
+
+    This writes directly to a file without going through loguru,
+    avoiding duplicate output issues.
+    """
+    global _context_log_file
+    if _context_log_file is None:
+        current_date = datetime.now()
+        formatted_date = current_date.strftime("%Y%m%d%H%M%S")
+        log_path = PROJECT_ROOT / f"logs/context_{formatted_date}.log"
+        _context_log_file = open(log_path, "w", encoding="utf-8")
+    return _context_log_file
+
+
+def close_context_logger():
+    """Close the context log file."""
+    global _context_log_file
+    if _context_log_file is not None:
+        _context_log_file.close()
+        _context_log_file = None
+
+
+def context_log(message: str):
+    """Write a message to the context log file."""
+    f = get_context_logger()
+    f.write(message + "\n")
+    f.flush()
+
 
 def define_log_level(print_level="INFO", logfile_level="DEBUG", name: str = None):
     """Adjust the log level to above level"""

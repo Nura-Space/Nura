@@ -1,6 +1,30 @@
-"""Configuration for context management (turn-based compression)."""
+"""Configuration for context management (turn-based compression).
 
+DEPRECATED: This module is deprecated. Use nura.config instead.
+
+This module is kept for backward compatibility but will be removed in a future version.
+Please migrate to the new configuration system:
+
+    Old:
+        from nura.context.config import ContextConfig
+        config = ContextConfig()
+
+    New:
+        from nura.config import get_config
+        config = get_config()
+        context_config = config.context
+"""
+
+import warnings
 from dataclasses import dataclass
+
+# Issue deprecation warning when module is imported
+warnings.warn(
+    "nura.context.config is deprecated and will be removed in a future version. "
+    "Please use 'from nura.config import get_config' instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 @dataclass

@@ -2,14 +2,15 @@
 """
 Memory read script - Read specific memory file content.
 
-Usage:
-    python read.py <event_XXXXX.json>
+Enhanced features:
+    - Batch reading: read.py file1.json file2.json file3.json
+    - Field selection: read.py file.json --fields summary,type,characters
+    - JSON output: read.py file.json --json
 
 Security:
     - Only reads .json files in the memory directory
     - Validates filename format (event_XXXXX.json)
     - Validates path to prevent directory traversal
-    - Sanitizes output
 """
 
 import argparse
@@ -18,11 +19,11 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 # Security: Valid filename pattern
-FILENAME_PATTERN = re.compile(r'^event_\d+\.json$')
+FILENAME_PATTERN = re.compile(r"^event_\d+\.json$")
 
 
 def get_memory_dir() -> Path:
@@ -31,6 +32,7 @@ def get_memory_dir() -> Path:
     if not memory_dir:
         try:
             from nura.core.config import config
+
             if config.memory_config and config.memory_config.memory_dir:
                 memory_dir = config.memory_config.memory_dir
         except Exception:
@@ -45,10 +47,8 @@ def get_memory_dir() -> Path:
 
 def validate_filename(filename: str) -> bool:
     """Validate filename format to prevent path traversal."""
-    # Only allow event_XXXXX.json pattern
     if not FILENAME_PATTERN.match(filename):
         return False
-    # Additional check: no path separators
     if "/" in filename or "\\" in filename:
         return False
     return True
@@ -64,24 +64,13 @@ def validate_path(path: Path, base_dir: Path) -> bool:
 
 
 def read_memory(filename: str, memory_dir: Path) -> Optional[Dict[str, Any]]:
-    """
-    Read a specific memory file.
-
-    Args:
-        filename: Name of the memory file (e.g., event_00001.json)
-        memory_dir: Path to memory directory
-
-    Returns:
-        Memory content as dict, or None if not found
-    """
-    # Security: Validate filename
+    """Read a specific memory file."""
     if not validate_filename(filename):
         print(f"Error: Invalid filename format: {filename}", file=sys.stderr)
         return None
 
     file_path = memory_dir / filename
 
-    # Security: Validate path
     if not validate_path(file_path, memory_dir):
         print(f"Error: Path traversal attempt detected", file=sys.stderr)
         return None
@@ -92,31 +81,44 @@ def read_memory(filename: str, memory_dir: Path) -> Optional[Dict[str, Any]]:
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data
+            return json.load(f)
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON in file: {e}", file=sys.stderr)
+        print(f"Error: Invalid JSON in {filename}: {e}", file=sys.stderr)
         return None
     except (IOError, UnicodeDecodeError) as e:
-        print(f"Error: Cannot read file: {e}", file=sys.stderr)
+        print(f"Error: Cannot read {filename}: {e}", file=sys.stderr)
         return None
 
 
-def format_memory(data: Dict[str, Any], format_json: bool = False) -> str:
+def filter_fields(data: Dict[str, Any], fields: List[str]) -> Dict[str, Any]:
     """
-    Format memory data for display.
-
-    Args:
-        data: Memory content
-        format_json: If True, output as JSON; otherwise, format as readable text
-
-    Returns:
-        Formatted string
+    Filter data to only include specified fields.
+    Supports dot notation for nested access (e.g., 'characters.name').
     """
-    if format_json:
-        return json.dumps(data, ensure_ascii=False, indent=2)
+    result = {}
+    for field in fields:
+        if "." in field:
+            # Nested field: extract from structure
+            parts = field.split(".", 1)
+            root, rest = parts[0], parts[1]
+            if root in data:
+                val = data[root]
+                if isinstance(val, list):
+                    extracted = []
+                    for item in val:
+                        if isinstance(item, dict) and rest in item:
+                            extracted.append(item[rest])
+                    if extracted:
+                        result[field] = extracted
+                elif isinstance(val, dict) and rest in val:
+                    result[field] = val[rest]
+        elif field in data:
+            result[field] = data[field]
+    return result
 
-    # Human-readable format
+
+def format_memory(data: Dict[str, Any]) -> str:
+    """Format memory data for human-readable display."""
     lines = []
 
     # Basic fields
@@ -126,7 +128,10 @@ def format_memory(data: Dict[str, Any], format_json: bool = False) -> str:
 
     # Actions
     if "actions" in data and data["actions"]:
-        lines.append(f"actions: {', '.join(data['actions'])}")
+        if isinstance(data["actions"], list):
+            lines.append(f"actions: {', '.join(str(a) for a in data['actions'])}")
+        else:
+            lines.append(f"actions: {data['actions']}")
 
     # Emotion
     if "emotion" in data and data["emotion"]:
@@ -136,10 +141,15 @@ def format_memory(data: Dict[str, Any], format_json: bool = False) -> str:
     if "characters" in data and data["characters"]:
         lines.append("\ncharacters:")
         for char in data["characters"]:
-            name = char.get("name", "unknown")
-            actions = char.get("actions", [])
-            emotion = char.get("emotion", "未明确")
-            lines.append(f"  - {name}: {', '.join(actions)} (emotion: {emotion})")
+            if isinstance(char, dict):
+                name = char.get("name", "unknown")
+                actions = char.get("actions", [])
+                emotion = char.get("emotion", "")
+                action_str = ", ".join(str(a) for a in actions) if isinstance(actions, list) else str(actions)
+                line = f"  - {name}: {action_str}"
+                if emotion:
+                    line += f" (emotion: {emotion})"
+                lines.append(line)
 
     # Prefix/Suffix (context)
     if "prefix" in data and data["prefix"]:
@@ -153,48 +163,82 @@ def format_memory(data: Dict[str, Any], format_json: bool = False) -> str:
     if "impact" in data and data["impact"]:
         lines.append(f"impact: {data['impact']}")
 
+    # Any remaining fields not in the standard set
+    standard_fields = {"type", "stage", "summary", "description", "actions", "emotion",
+                       "characters", "prefix", "suffix", "thought", "impact"}
+    for key, value in data.items():
+        if key not in standard_fields and value:
+            if isinstance(value, (list, dict)):
+                lines.append(f"\n{key}: {json.dumps(value, ensure_ascii=False)}")
+            else:
+                lines.append(f"{key}: {value}")
+
     return "\n".join(lines)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Read specific memory file content",
+        description="Read memory file content (supports batch reading and field selection)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
     python read.py event_00001.json
+    python read.py event_00001.json event_00002.json event_00003.json
+    python read.py event_00001.json --fields summary,type,characters
     python read.py event_00001.json --json
-        """
+        """,
     )
 
-    parser.add_argument(
-        "filename",
-        help="Memory file to read (e.g., event_00001.json)"
-    )
-
-    parser.add_argument(
-        "--json", "-j",
-        action="store_true",
-        help="Output as raw JSON"
-    )
+    parser.add_argument("filenames", nargs="+", help="Memory files to read (e.g., event_00001.json)")
+    parser.add_argument("--json", "-j", action="store_true", help="Output as raw JSON")
+    parser.add_argument("--fields", type=str, help="Comma-separated fields to include (e.g., summary,type,characters.name)")
 
     args = parser.parse_args()
 
     # Get memory directory
     memory_dir = get_memory_dir()
-
     if not memory_dir.exists():
         print(f"Error: Memory directory not found: {memory_dir}", file=sys.stderr)
         sys.exit(1)
 
-    # Read memory
-    data = read_memory(args.filename, memory_dir)
+    # Parse fields
+    selected_fields = args.fields.split(",") if args.fields else None
 
-    if data is None:
+    # Read files
+    all_data = []
+    errors = 0
+
+    for filename in args.filenames:
+        data = read_memory(filename, memory_dir)
+        if data is None:
+            errors += 1
+            continue
+
+        if selected_fields:
+            data = filter_fields(data, selected_fields)
+
+        all_data.append((filename, data))
+
+    if not all_data:
         sys.exit(1)
 
     # Output
-    print(format_memory(data, format_json=args.json))
+    if args.json:
+        if len(all_data) == 1:
+            print(json.dumps(all_data[0][1], ensure_ascii=False, indent=2))
+        else:
+            output = [{"file": fn, "data": d} for fn, d in all_data]
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+    else:
+        for i, (filename, data) in enumerate(all_data):
+            if len(all_data) > 1:
+                print(f"=== {filename} ===")
+            print(format_memory(data))
+            if i < len(all_data) - 1:
+                print()
+
+    if errors > 0:
+        print(f"\n({errors} file(s) could not be read)", file=sys.stderr)
 
 
 if __name__ == "__main__":

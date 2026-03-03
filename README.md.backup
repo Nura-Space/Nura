@@ -1,15 +1,9 @@
 # Nura - Universal Event-Driven AI Agent Platform
 
-<div align="center">
-
-[English](README.md) | [简体中文](README.zh.md)
-
 [![CI](https://github.com/baikai-li/nura/actions/workflows/ci.yml/badge.svg)](https://github.com/baikai-li/nura/actions)
 [![codecov](https://codecov.io/gh/baikai-li/nura/branch/main/graph/badge.svg)](https://codecov.io/gh/baikai-li/nura)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-</div>
 
 Nura is a production-ready, event-driven AI agent platform built for building intelligent, scalable conversational AI applications. With ~12k lines of Python code, it provides a complete framework for creating AI agents that can interact across multiple platforms.
 
@@ -84,11 +78,17 @@ pip install -e ".[all]"
 ### Running the Feishu Bot
 
 ```bash
-# Run with Makefile (recommended)
-make run
+# Navigate to example
+cd examples/feishu_bot
 
-# Or use Nura CLI directly
-nura run --platform feishu
+# Copy and configure platform settings (optional, can use env vars)
+cp config/platforms/feishu.example.toml config/platforms/feishu.toml
+
+# Run with new configuration system
+python run.py
+
+# Or run with legacy JSON config
+python run.py --legacy
 ```
 
 ## 📚 Architecture
@@ -385,10 +385,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-<div align="center">
-
 **Built with ❤️ by the Nura team**
-
-[English](README.md) | [简体中文](README.zh.md)
-
-</div>

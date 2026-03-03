@@ -1,4 +1,5 @@
 import json
+import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Union
 
@@ -98,6 +99,21 @@ class BaseTool(ABC, BaseModel):
     class Config:
         arbitrary_types_allowed = True
         underscore_attrs_are_private = False
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._temp_files: list[str] = []
+
+    def cleanup(self):
+        """Clean up temporary files created during execution."""
+        for temp_file in self._temp_files:
+            try:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                    logger.info(f"Cleaned up temp file: {temp_file}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up temp file {temp_file}: {e}")
+        self._temp_files.clear()
 
     # def __init__(self, **data):
     #     """Initialize tool with model validation and schema registration."""

@@ -39,10 +39,11 @@ def isolate_environment(tmp_path, monkeypatch):
 
 @pytest.fixture
 def llm_config():
-    """Load real LLM configuration from config.toml."""
+    """Load real LLM configuration from default.toml."""
     from nura.core.config import config
-    # Return the full config dict, not just the default settings
-    return config.llm
+    # config.llm returns a dict like {'default': LLMSettings(...), ...}
+    # Return the default LLMSettings object
+    return config.llm.get("default")
 
 
 @pytest.fixture
@@ -50,12 +51,14 @@ def real_llm(llm_config):
     """Create real LLM instance for integration tests.
 
     This fixture creates an LLM instance using the real configuration
-    from config.toml. Use this for integration tests that need actual API calls.
+    from default.toml. Use this for integration tests that need actual API calls.
     """
     from nura.llm import LLM
 
     # Clear instances to ensure fresh creation with test config
     LLM._instances.clear()
+
+    # llm_config fixture now returns LLMSettings object directly
     llm = LLM(config_name='default', llm_config=llm_config)
     yield llm
     # Cleanup after test

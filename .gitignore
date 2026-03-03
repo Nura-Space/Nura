@@ -67,10 +67,11 @@ logs/
 Thumbs.db
 
 # Project specific
-config/config.json
-config/config.toml
-examples/**/config.json
+config/default.toml
+config/platforms/*.toml
+!config/platforms/*.example.toml
 *.env
+.env
 
 # Claude
 .claude/

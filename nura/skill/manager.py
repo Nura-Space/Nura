@@ -58,10 +58,15 @@ class SkillManager:
 
     def __init__(
         self,
-        workspace: str = ".",
+        workspace: Optional[str] = None,
         builtin_skills_dir: Optional[str] = None,
     ):
-        self.workspace = Path(workspace)
+        # Default to project root (parent of nura/)
+        if workspace is None:
+            workspace = Path(__file__).resolve().parent.parent.parent
+        else:
+            workspace = Path(workspace)
+        self.workspace = workspace
         self.workspace_skills = self.workspace / "skills"
         # None means don't load any builtin skills, otherwise use the path
         self.builtin_skills = (
@@ -151,23 +156,22 @@ class SkillManager:
         # Localization
         labels = {
             "en": {
-                "available": "Available",
-                "unavailable": "Unavailable",
-                "requires": "Requires",
-                "location": "Location",
                 "name": "Name",
                 "description": "Description",
+                "available": "Available",
             },
             "zh": {
-                "available": "可用",
-                "unavailable": "不可用",
-                "requires": "需要",
-                "location": "路径",
                 "name": "名称",
                 "description": "描述",
+                "available": "可用",
             },
         }
-        labels_dict = labels.get(lang, "en")
+        labels_dict = labels.get(lang, labels["en"])
+
+        unavailable_labels = {
+            "en": "Unavailable",
+            "zh": "不可用",
+        }
 
         def escape_xml(s: str) -> str:
             return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -176,28 +180,12 @@ class SkillManager:
         for skill in all_skills:
             name = escape_xml(skill.name)
             desc = escape_xml(skill.description)
-            available = skill.available
+            available = labels_dict["available"] if skill.available else unavailable_labels.get(lang, unavailable_labels["en"])
 
             lines.append("  <skill>")
             lines.append(f"    <{labels_dict['name']}>{name}</{labels_dict['name']}>")
-            lines.append(
-                f"    <{labels_dict['description']}>{desc}</{labels_dict['description']}>"
-            )
-            # 暂时不要
-            # lines.append(f"    <{labels_dict['location']}>{path}</{labels_dict['location']}>")
-
-            # Show availability status for unavailable skills
-            if not available:
-                status = labels_dict["unavailable"]
-                lines.append(f"    <Status>{escape_xml(status)}</Status>")
-                # Show missing requirements for unavailable skills
-                if skill.requires:
-                    missing = self._get_missing_requirements(skill.requires)
-                    if missing:
-                        lines.append(
-                            f"    <{labels_dict['requires']}>{escape_xml(missing)}</{labels_dict['requires']}>"
-                        )
-
+            lines.append(f"    <{labels_dict['description']}>{desc}</{labels_dict['description']}>")
+            lines.append(f"    <{labels_dict['available']}>{available}</{labels_dict['available']}>")
             lines.append("  </skill>")
         lines.append("</skills>")
 

@@ -2,7 +2,7 @@
 """
 Memory search scripts package.
 
-Provides safe, secure scripts for searching and reading memory files.
+Provides unified query engine and reader for memory files.
 """
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"

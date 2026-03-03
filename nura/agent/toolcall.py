@@ -5,6 +5,7 @@ from typing import Any, List, Optional, Union
 from pydantic import Field
 
 from nura.agent.react import ReActAgent
+from nura.config import get_config
 from nura.core.exceptions import TokenLimitExceeded
 from nura.core.logger import logger
 from nura.agent.prompts.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
@@ -34,6 +35,33 @@ class ToolCallAgent(ReActAgent):
 
     max_steps: int = 30
     max_observe: Optional[Union[int, bool]] = None
+
+    def _should_skip_memory_for_special_tool(self, tool_names: List[str]) -> bool:
+        """Check if we should skip adding messages to memory for special tools.
+
+        When cache_strategy is 'input_only' and the tool is a special tool (like end_chat),
+        we skip adding the assistant message and tool result to memory since the output
+        is not cached anyway.
+        """
+        if not tool_names:
+            return False
+        try:
+            config = get_config()
+            llm_config = config.llm.get("default")
+            if llm_config is None:
+                return False
+            cache_strategy = getattr(llm_config, "cache_strategy", "input_only")
+            if cache_strategy != "input_only":
+                return False
+        except Exception:
+            # If config is not available, don't skip
+            return False
+
+        # Check if any of the tool names are special tools
+        for name in tool_names:
+            if self._is_special_tool(name):
+                return True
+        return False
 
     async def think(self) -> bool:
         """Process current state and decide next actions using tools"""
@@ -105,12 +133,19 @@ class ToolCallAgent(ReActAgent):
                 return False
 
             # Create and add assistant message
-            assistant_msg = (
-                Message.from_tool_calls(content=content, tool_calls=self.tool_calls)
-                if self.tool_calls
-                else Message.assistant_message(content)
-            )
-            self.memory.add_message(assistant_msg)
+            # Skip adding to memory if it's a special tool (like end_chat) with input_only caching
+            tool_names = [call.function.name for call in self.tool_calls] if self.tool_calls else []
+            skip_memory = self._should_skip_memory_for_special_tool(tool_names)
+
+            if skip_memory:
+                logger.debug(f"Skipping memory update for special tool(s): {tool_names}")
+            else:
+                assistant_msg = (
+                    Message.from_tool_calls(content=content, tool_calls=self.tool_calls)
+                    if self.tool_calls
+                    else Message.assistant_message(content)
+                )
+                self.memory.add_message(assistant_msg)
 
             if self.tool_choices == ToolChoice.REQUIRED and not self.tool_calls:
                 return True  # Will be handled in act()
@@ -138,6 +173,22 @@ class ToolCallAgent(ReActAgent):
             # Return last message content if no tool calls
             return self.messages[-1].content or "No content or commands to execute"
 
+        # Deduplicate tool calls by function name + arguments to avoid duplicate execution
+        seen_signatures = set()
+        unique_tool_calls = []
+        for command in self.tool_calls:
+            # Create a signature from function name and arguments
+            sig = (command.function.name, command.function.arguments)
+            if sig not in seen_signatures:
+                seen_signatures.add(sig)
+                unique_tool_calls.append(command)
+            else:
+                logger.warning(
+                    f"Skipping duplicate tool call: {command.function.name} with args: {command.function.arguments}"
+                )
+
+        self.tool_calls = unique_tool_calls
+
         results = []
         for command in self.tool_calls:
             # Reset base64_image for each tool call
@@ -152,14 +203,19 @@ class ToolCallAgent(ReActAgent):
                 f"🎯 Tool '{command.function.name}' completed its mission! Result: {result}"
             )
 
-            # Add tool response to memory
-            tool_msg = Message.tool_message(
-                content=result,
-                tool_call_id=command.id,
-                name=command.function.name,
-                base64_image=self._current_base64_image,
-            )
-            self.memory.add_message(tool_msg)
+            # Skip adding tool response to memory if it's a special tool with input_only caching
+            skip_memory = self._should_skip_memory_for_special_tool([command.function.name])
+
+            if not skip_memory:
+                tool_msg = Message.tool_message(
+                    content=result,
+                    tool_call_id=command.id,
+                    name=command.function.name,
+                    base64_image=self._current_base64_image,
+                )
+                self.memory.add_message(tool_msg)
+            else:
+                logger.debug(f"Skipping memory update for tool result: {command.function.name}")
             results.append(result)
 
         return "\n\n".join(results)

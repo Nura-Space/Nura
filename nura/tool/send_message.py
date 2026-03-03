@@ -73,18 +73,6 @@ class SendMessage(BaseTool):
 
     def __init__(self):
         super().__init__()
-        self._temp_files: list[str] = []
-
-    def cleanup(self):
-        """Clean up temporary files created during execution."""
-        for temp_file in self._temp_files:
-            try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                    logger.info(f"Cleaned up temp file: {temp_file}")
-            except Exception as e:
-                logger.warning(f"Failed to clean up temp file {temp_file}: {e}")
-        self._temp_files.clear()
 
     async def execute(self, content: str, emotion: str = None) -> ToolResult:
         """Send a message to the user.

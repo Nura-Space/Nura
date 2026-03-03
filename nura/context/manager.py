@@ -6,7 +6,8 @@ from typing import List, Optional, Callable, Any, Awaitable
 from loguru import logger
 
 from nura.core.schema import Message, Role
-from nura.context.config import ContextConfig
+from nura.config import get_config, ContextConfig
+from nura.context.config import ContextConfig as LegacyContextConfig  # For backward compatibility
 
 
 class ContextManager:
@@ -24,7 +25,10 @@ class ContextManager:
     """
 
     def __init__(self, config: Optional[ContextConfig] = None):
-        self.config = config or ContextConfig()
+        if config is None:
+            # Use new configuration system by default
+            config = get_config().context
+        self.config = config
         self._messages: List[Message] = []
         self._summary: Optional[str] = None
         self._token_count: int = 0

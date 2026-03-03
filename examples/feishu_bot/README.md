@@ -15,52 +15,75 @@
 
 ### 1. 配置
 
-复制示例配置文件并填写您的凭证：
-
 ```bash
-cd examples/feishu_bot
-cp config.example.json config.json
-# 编辑 config.json 填入您的飞书凭证
+# 从项目根目录
+cd /path/to/Nura
+
+# 1. 复制配置模板
+cp config/default.example.toml config/default.toml
+cp config/platforms/feishu.example.toml config/platforms/feishu.toml
+cp .env.example .env
+
+# 2. 编辑配置文件，填入您的凭证
+vim .env
+vim config/platforms/feishu.toml
 ```
 
-### 2. 配置说明
+**`.env` 文件示例**：
+```bash
+# 飞书凭证
+FEISHU_APP_ID=cli_xxxxxxxxxxxxx
+FEISHU_APP_SECRET=your_feishu_app_secret
 
-`config.json` 参数：
+# TTS 配置（可选，启用语音回复时需要）
+VOLCENGINE_TTS_TOKEN=your_volcengine_access_token
+VOLCENGINE_TTS_APP_ID=your_volcengine_app_id
 
-```json
-{
-  "feishu_app_id": "您的飞书应用ID",
-  "feishu_app_secret": "您的飞书应用密钥",
-  "profile_path": "profiles/default.yaml",  // 虚拟人设文件
-  "memory_dir": "memory",                    // 记忆文件目录
-  "enable_voice_reply": false,               // 是否启用语音回复
-  "tts_config": {                            // TTS配置（如启用语音）
-    "access_token": "字节跳火山引擎Token",
-    "app_id": "火山引擎应用ID",
-    "cluster": "volcano_tts",
-    "voice_type": "zh_female_qingxin"
-  }
-}
+# LLM 配置
+NURA_LLM_API_KEY=your-api-key
+NURA_LLM_MODEL=gpt-4
 ```
 
-### 3. 运行
+**`config/platforms/feishu.toml` 配置项**：
+```toml
+# 飞书应用凭证
+app_id = "cli_xxxxxxxxxxxxx"
+app_secret = "your_feishu_app_secret"
+
+# Agent 人格配置
+profile_path = "profiles/assistant.yaml"
+
+# 记忆存储
+memory_dir = "examples/feishu_bot/memory"
+
+# 语音回复
+enable_voice_reply = false
+
+# 消息收集时间
+message_collect_seconds = 10
+
+# TTS 配置
+[tts]
+access_token = "your_volcengine_access_token"
+app_id = "your_volcengine_app_id"
+cluster = "volcano_tts"
+voice_type = "zh_female_qingxin"
+```
+
+### 2. 运行
 
 ```bash
-# 方式 1：使用 run.py
-python run.py
+# 方式 1：使用 Makefile（从项目根目录）
+make run
 
-# 方式 2：使用 Nura CLI（从项目根目录）
-cd ../..
-nura run --config examples/feishu_bot/config.json --platform feishu
+# 方式 2：使用 Nura CLI
+nura run --platform feishu
 ```
 
 ## 目录结构
 
 ```
 feishu_bot/
-├── config.example.json    # 配置示例
-├── config.json            # 实际配置（需自行创建）
-├── run.py                 # 启动脚本
 ├── profiles/              # 虚拟人设
 │   └── default.yaml       # 默认人设
 ├── skills/                # 自定义技能
@@ -113,11 +136,12 @@ requires:
 - 确认网络连接正常
 
 ### 工具调用失败
-- 检查 `config/config.toml` 中的 API key 配置
+- 检查 `config/default.toml` 或 `.env` 文件中的 API key 配置
+- 确认环境变量已正确设置（`env | grep NURA`）
 - 查看日志了解具体错误
 
 ### 语音回复不工作
-- 确认 `enable_voice_reply: true`
+- 确认 `enable_voice_reply = true` 在 feishu.toml 中
 - 检查 TTS 配置是否正确
 - 确保安装了 `ffmpeg`（用于音频转换）
 
@@ -133,7 +157,7 @@ requires:
 
 ### 修改日志级别
 
-在 `run.py` 中添加：
+在代码中添加：
 
 ```python
 from loguru import logger

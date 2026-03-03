@@ -31,8 +31,11 @@ class TestSkillManager:
 
     def test_initialization_default(self):
         """Test SkillManager initialization with defaults."""
+        reset_skill_manager_singleton()
         manager = SkillManager()
-        assert manager.workspace == Path(".")
+        # Default workspace should be project root (absolute path)
+        assert manager.workspace.is_absolute()
+        assert manager.workspace.name == "Nura"
         assert len(manager.skills) == 0
 
     def test_initialization_custom(self):
