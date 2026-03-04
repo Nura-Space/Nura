@@ -1,4 +1,4 @@
-.PHONY: test test-unit test-integration test-e2e test-live test-cov test-cov-all test-watch install-dev clean run
+.PHONY: test test-unit test-integration test-e2e test-live test-cov test-cov-all test-watch install-dev clean run lint format
 
 # Install development dependencies (uses uv)
 install-dev:
@@ -48,6 +48,16 @@ test-watch:
 # Parallel execution
 test-parallel:
 	uv run pytest tests/unit tests/integration -n auto
+
+# Lint and format checks
+lint:
+	uv run ruff check nura/
+	uv run black --check nura/
+
+# Format code
+format:
+	uv run black nura/
+	uv run ruff check nura/ --fix
 
 # Clean build artifacts and old logs (logs older than 7 days)
 clean:
