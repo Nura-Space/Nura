@@ -5,7 +5,7 @@ import re
 import tempfile
 import uuid
 
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.tool.base import BaseTool, ToolResult
 from nura.services.sendable import AudioContent, TextContent
@@ -122,7 +122,7 @@ class SendMessage(BaseTool):
                 logger.info(f"Adding emoji {emoji_text} for emotion: {emotion}")
 
         self.cleanup()
-        return self.success_response(f"消息已发送: {content}")
+        return self.success_response(f"消息已发送")
 
     async def _send_voice(self, text: str):
         """Send voice reply using TTS."""

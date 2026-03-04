@@ -4,7 +4,7 @@ import os
 import tempfile
 import uuid
 
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.services.sendable import AudioContent, FileContent
 from nura.services.utils import convert_to_opus, get_audio_duration

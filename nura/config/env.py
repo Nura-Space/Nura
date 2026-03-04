@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from loguru import logger
+from nura.core.logger import logger
 
 
 def get_project_root() -> Path:

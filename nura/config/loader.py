@@ -13,7 +13,7 @@ except ImportError:
     import tomli as tomllib
 
 import yaml
-from loguru import logger
+from nura.core.logger import logger
 
 
 def load_toml(path: Union[str, Path]) -> Dict[str, Any]:

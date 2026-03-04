@@ -11,7 +11,7 @@ import uuid
 from typing import Any
 
 import lark_oapi as lark
-from loguru import logger
+from nura.core.logger import logger
 
 # Nura imports - clean and simple
 from nura.event import Event, EventType

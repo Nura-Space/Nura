@@ -1,6 +1,7 @@
 """Prompt template utilities."""
 
 import os
+import string
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +46,19 @@ def load_prompt_with_context(
         Rendered prompt string
     """
     template = load_prompt(template_name, language)
-    return template.format(**context)
+
+    # Extract placeholders from template and provide empty defaults for missing keys
+    formatter = string.Formatter()
+    placeholders = {
+        field_name: ""
+        for literal_text, field_name, format_spec, conversion in formatter.parse(template)
+        if field_name and not field_name.startswith("_")
+    }
+
+    # Merge provided context with defaults
+    merged_context = {**placeholders, **context}
+
+    return template.format(**merged_context)
 
 
 def build_roleplay_prompt(profile_path: str) -> str:
@@ -69,6 +82,7 @@ def build_roleplay_prompt(profile_path: str) -> str:
     world = profile.get("world", "")
     relations = profile.get("relations", "")
     notes = profile.get("notes", "")
+    novel = profile.get("novel", "")
     language = profile.get("language", "zh")
 
     os.environ["VIRTUAL_IP_NAME"] = name
@@ -82,6 +96,7 @@ def build_roleplay_prompt(profile_path: str) -> str:
             "world": world,
             "relations": relations,
             "notes": notes,
+            "novel": novel,
         },
         language=language,
     )

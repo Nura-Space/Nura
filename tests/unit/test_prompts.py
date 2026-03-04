@@ -68,12 +68,12 @@ class TestLoadPromptWithContext:
 
     @pytest.mark.unit
     def test_load_with_missing_context_key(self):
-        """Test loading with missing context key raises error."""
+        """Test loading with missing context key uses empty defaults."""
         context = {"name": "Test"}  # Missing other keys
 
-        # Should raise KeyError because template requires all keys
-        with pytest.raises(KeyError):
-            load_prompt_with_context("roleplay", context, "en")
+        # Should NOT raise KeyError - missing keys default to empty string
+        result = load_prompt_with_context("roleplay", context, "en")
+        assert "Test" in result
 
 
 class TestBuildRoleplayPrompt:

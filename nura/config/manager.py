@@ -10,7 +10,7 @@ Implements the 4-layer configuration loading strategy:
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.config.env import get_project_root, load_dotenv, load_env_overrides
 from nura.config.loader import (

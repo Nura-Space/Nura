@@ -3,7 +3,7 @@ import json
 import uuid
 import asyncio
 import requests
-from loguru import logger
+from nura.core.logger import logger
 from typing import Optional
 
 from nura.services.tts import TTSService

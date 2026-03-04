@@ -17,7 +17,7 @@ import json
 import warnings
 from typing import Any, Dict
 
-from loguru import logger
+from nura.core.logger import logger
 
 # Issue deprecation warning when module is imported
 warnings.warn(

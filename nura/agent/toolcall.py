@@ -36,6 +36,32 @@ class ToolCallAgent(ReActAgent):
     max_steps: int = 30
     max_observe: Optional[Union[int, bool]] = None
 
+    def _deduplicate_tool_calls(self, tool_calls: List) -> List:
+        """Deduplicate tool calls by function name + arguments.
+
+        Args:
+            tool_calls: List of tool calls to deduplicate
+
+        Returns:
+            Deduplicated list of tool calls
+        """
+        if not tool_calls:
+            return tool_calls
+
+        seen_signatures = set()
+        unique_tool_calls = []
+        for command in tool_calls:
+            # Create a signature from function name and arguments
+            sig = (command.function.name, command.function.arguments)
+            if sig not in seen_signatures:
+                seen_signatures.add(sig)
+                unique_tool_calls.append(command)
+            else:
+                logger.warning(
+                    f"Skipping duplicate tool call: {command.function.name} with args: {command.function.arguments}"
+                )
+        return unique_tool_calls
+
     def _should_skip_memory_for_special_tool(self, tool_names: List[str]) -> bool:
         """Check if we should skip adding messages to memory for special tools.
 
@@ -105,6 +131,11 @@ class ToolCallAgent(ReActAgent):
         )
         content = response.content if response and response.content else ""
 
+        # Deduplicate tool calls by function name + arguments BEFORE creating assistant message
+        # This ensures the memory doesn't contain duplicate tool_calls
+        self.tool_calls = self._deduplicate_tool_calls(self.tool_calls)
+        tool_calls = self.tool_calls  # Update local reference after deduplication
+
         # Log response info
         logger.info(f"✨ {self.name}'s thoughts: {content}")
         logger.info(
@@ -134,11 +165,17 @@ class ToolCallAgent(ReActAgent):
 
             # Create and add assistant message
             # Skip adding to memory if it's a special tool (like end_chat) with input_only caching
-            tool_names = [call.function.name for call in self.tool_calls] if self.tool_calls else []
+            tool_names = (
+                [call.function.name for call in self.tool_calls]
+                if self.tool_calls
+                else []
+            )
             skip_memory = self._should_skip_memory_for_special_tool(tool_names)
 
             if skip_memory:
-                logger.debug(f"Skipping memory update for special tool(s): {tool_names}")
+                logger.debug(
+                    f"Skipping memory update for special tool(s): {tool_names}"
+                )
             else:
                 assistant_msg = (
                     Message.from_tool_calls(content=content, tool_calls=self.tool_calls)
@@ -173,22 +210,6 @@ class ToolCallAgent(ReActAgent):
             # Return last message content if no tool calls
             return self.messages[-1].content or "No content or commands to execute"
 
-        # Deduplicate tool calls by function name + arguments to avoid duplicate execution
-        seen_signatures = set()
-        unique_tool_calls = []
-        for command in self.tool_calls:
-            # Create a signature from function name and arguments
-            sig = (command.function.name, command.function.arguments)
-            if sig not in seen_signatures:
-                seen_signatures.add(sig)
-                unique_tool_calls.append(command)
-            else:
-                logger.warning(
-                    f"Skipping duplicate tool call: {command.function.name} with args: {command.function.arguments}"
-                )
-
-        self.tool_calls = unique_tool_calls
-
         results = []
         for command in self.tool_calls:
             # Reset base64_image for each tool call
@@ -204,7 +225,9 @@ class ToolCallAgent(ReActAgent):
             )
 
             # Skip adding tool response to memory if it's a special tool with input_only caching
-            skip_memory = self._should_skip_memory_for_special_tool([command.function.name])
+            skip_memory = self._should_skip_memory_for_special_tool(
+                [command.function.name]
+            )
 
             if not skip_memory:
                 tool_msg = Message.tool_message(
@@ -215,7 +238,9 @@ class ToolCallAgent(ReActAgent):
                 )
                 self.memory.add_message(tool_msg)
             else:
-                logger.debug(f"Skipping memory update for tool result: {command.function.name}")
+                logger.debug(
+                    f"Skipping memory update for tool result: {command.function.name}"
+                )
             results.append(result)
 
         return "\n\n".join(results)

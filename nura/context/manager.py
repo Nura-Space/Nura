@@ -3,7 +3,7 @@
 import time
 from typing import List, Optional, Callable, Any, Awaitable
 
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.core.schema import Message, Role
 from nura.config import get_config, ContextConfig
