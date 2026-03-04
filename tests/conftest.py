@@ -43,11 +43,17 @@ def isolate_environment(tmp_path, monkeypatch):
 @pytest.fixture
 def llm_config():
     """Load real LLM configuration from default.toml."""
-    from nura.core.config import config
+    import warnings
 
-    # config.llm returns a dict like {'default': LLMSettings(...), ...}
-    # Return the default LLMSettings object
-    return config.llm.get("default")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        from nura.core.config import config
+
+        # config.llm returns a dict like {'default': LLMSettings(...), ...}
+        # Return the default LLMSettings object, or None if not available
+        if config.llm is None:
+            return None
+        return config.llm.get("default")
 
 
 @pytest.fixture
@@ -58,6 +64,10 @@ def real_llm(llm_config):
     from default.toml. Use this for integration tests that need actual API calls.
     """
     from nura.llm import LLM
+
+    # Skip if config is not available
+    if llm_config is None:
+        pytest.skip("LLM config not available")
 
     # Clear instances to ensure fresh creation with test config
     LLM._instances.clear()
