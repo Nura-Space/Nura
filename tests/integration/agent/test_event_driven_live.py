@@ -4,9 +4,7 @@ These tests require real API credentials and are marked with @pytest.mark.live.
 Run with: NURA_LIVE_TEST=1 uv run pytest tests/integration/agent/test_event_driven_live.py -v
 """
 import asyncio
-import os
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from typing import List
 
 from nura.event import EventQueue, Event, EventType

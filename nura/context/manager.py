@@ -7,7 +7,6 @@ from nura.core.logger import logger
 
 from nura.core.schema import Message, Role
 from nura.config import get_config, ContextConfig
-from nura.context.config import ContextConfig as LegacyContextConfig  # For backward compatibility
 
 
 class ContextManager:

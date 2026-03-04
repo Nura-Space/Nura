@@ -168,7 +168,7 @@ class TestAskWithArkCache:
                 with patch("nura.llm.cache.ark.config"):
                     mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    result = await ask_with_ark_cache(
+                    await ask_with_ark_cache(
                         client=mock_client,
                         model="gpt-4",
                         messages=[{"role": "user", "content": "test"}],
@@ -230,7 +230,7 @@ class TestAskWithArkCache:
                 with patch("nura.llm.cache.ark.config"):
                     mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    result = await ask_with_ark_cache(
+                    await ask_with_ark_cache(
                         client=mock_client,
                         model="gpt-4",
                         messages=[{"role": "user", "content": "test"}],
@@ -297,7 +297,7 @@ class TestAskWithArkCache:
                 with patch("nura.llm.cache.ark.config"):
                     mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    result = await ask_with_ark_cache(
+                    await ask_with_ark_cache(
                         client=mock_client,
                         model="gpt-4",
                         messages=[{"role": "user", "content": "test"}],
@@ -392,7 +392,6 @@ class TestCacheStrategy:
             {"role": "user", "content": "How are you?"}
         ]
 
-        expected_input = [{"role": "user", "content": "How are you?"}]
 
         mock_config = MagicMock()
         mock_config.llm = {"cache_strategy": "full"}
@@ -419,7 +418,7 @@ class TestCacheStrategy:
                 with patch("nura.llm.cache.ark.config", mock_config):
                     mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    result = await ask_with_ark_cache(
+                    await ask_with_ark_cache(
                         client=mock_client,
                         model="gpt-4",
                         messages=[{"role": "user", "content": "How are you?"}],
@@ -470,10 +469,6 @@ class TestCacheStrategy:
             {"role": "user", "content": "How are you?"}
         ]
 
-        expected_input = [
-            {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
-        ]
 
         mock_config = MagicMock()
         mock_config.llm = {"cache_strategy": "input_only"}
@@ -500,7 +495,7 @@ class TestCacheStrategy:
                 with patch("nura.llm.cache.ark.config", mock_config):
                     mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    result = await ask_with_ark_cache(
+                    await ask_with_ark_cache(
                         client=mock_client,
                         model="gpt-4",
                         messages=[{"role": "user", "content": "How are you?"}],
@@ -577,7 +572,7 @@ class TestCacheStrategy:
                 with patch("nura.llm.cache.ark.config", mock_config):
                     mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    result = await ask_with_ark_cache(
+                    await ask_with_ark_cache(
                         client=mock_client,
                         model="gpt-4",
                         messages=[{"role": "user", "content": "How are you?"}],

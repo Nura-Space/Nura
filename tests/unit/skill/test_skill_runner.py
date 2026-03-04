@@ -1,8 +1,6 @@
 """Tests for skill runner module."""
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from nura.skill.runner import SkillRunner
 from nura.skill.types import Skill
@@ -35,7 +33,7 @@ class TestSkillRunner:
         mock_agent.run = mock_run
 
         with patch("nura.skill.runner.ToolCallAgent", return_value=mock_agent):
-            result = await SkillRunner.run_skill(mock_skill, "test input")
+            await SkillRunner.run_skill(mock_skill, "test input")
 
         # Note: Due to step extraction logic, single-line steps return empty
         # This tests that the method executes without error
@@ -51,7 +49,7 @@ class TestSkillRunner:
         mock_agent.run = mock_run
 
         with patch("nura.skill.runner.ToolCallAgent", return_value=mock_agent):
-            result = await SkillRunner.run_skill(mock_skill, "test input")
+            await SkillRunner.run_skill(mock_skill, "test input")
 
         # Single step returns empty due to step extraction logic
 
@@ -154,7 +152,7 @@ class TestSkillRunner:
         mock_agent.run = mock_run
 
         with patch("nura.skill.runner.ToolCallAgent", return_value=mock_agent):
-            result = await SkillRunner.run_skill(mock_skill, "input")
+            await SkillRunner.run_skill(mock_skill, "input")
 
         # Due to extraction logic, returns empty for single-line steps
 

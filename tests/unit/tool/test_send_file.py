@@ -53,7 +53,7 @@ class TestSendFile:
                 with patch('nura.tool.send_file.get_audio_duration', return_value=5000):
                     with patch('nura.tool.send_file.convert_to_opus', return_value=True):
                         # Test with mp3 file
-                        result = await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
+                        await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
 
                         # Should try to convert and send
 
@@ -77,7 +77,7 @@ class TestSendFile:
 
             with patch('nura.tool.send_file._get_client', return_value=mock_client):
                 with patch('nura.tool.send_file.get_audio_duration', return_value=3000):
-                    result = await tool.execute(file_path=test_file, file_type="opus")
+                    await tool.execute(file_path=test_file, file_type="opus")
 
                     # Should send without conversion
         finally:
@@ -192,6 +192,6 @@ class TestSendFileEdgeCases:
             with patch('nura.tool.send_file._get_client', return_value=mock_client):
                 with patch('nura.tool.send_file.get_audio_duration', return_value=None):
                     with patch('nura.tool.send_file.convert_to_opus', return_value=True):
-                        result = await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
+                        await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
 
                         # Should handle None duration gracefully (default to 0)

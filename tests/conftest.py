@@ -1,7 +1,7 @@
 """Global pytest fixtures and configuration."""
 import os
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 # === Environment Isolation ===
 
@@ -73,7 +73,6 @@ def mock_llm():
     """
     from nura.llm import LLM
     from nura.llm.adapters import OpenAIMessageAdapter
-    from unittest.mock import MagicMock
 
     # Clear instances to ensure fresh creation
     LLM._instances.clear()

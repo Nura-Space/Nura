@@ -1,9 +1,8 @@
 """Tests for nura/skill/manager.py"""
-import pytest
 import tempfile
 import os
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from nura.skill.manager import SkillManager, BUILTIN_SKILLS_DIR, reset_singleton
 from nura.skill.types import Skill, SkillRequires

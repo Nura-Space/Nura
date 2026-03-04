@@ -1,6 +1,5 @@
 """Tests for nura/cli.py"""
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import json
 import tempfile
 import os

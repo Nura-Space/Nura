@@ -1,8 +1,6 @@
 """Tests for configuration loader module."""
 
 import pytest
-from pathlib import Path
-import tempfile
 
 from nura.config.loader import (
     load_toml,

@@ -18,8 +18,7 @@ from nura.event import Event, EventType
 from nura.services.base import ClientFactory
 from nura.integrations.base import BaseBot
 from nura.integrations.feishu.client import FeishuClient
-from nura.config import get_config, ConfigManager
-from nura.config.loader import load_json  # For backward compatibility
+from nura.config import get_config
 from nura.utils import load_json_config
 from nura.utils.image_processor import ImageProcessor
 

@@ -1,9 +1,8 @@
 """Tests for LLM client module."""
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
 from nura.llm.client import LLM
-from nura.core.schema import Message
 
 
 class TestLLMClient:
@@ -276,7 +275,7 @@ class TestLLMClient:
                 mock_tiktoken.encoding_for_model.return_value = mock_encoder
 
                 with patch("nura.llm.client.AsyncOpenAI"):
-                    with patch("nura.llm.client.get_message_adapter") as mock_adapter:
+                    with patch("nura.llm.client.get_message_adapter"):
                         with patch("nura.llm.client.is_ark_provider") as mock_is_ark:
                             mock_is_ark.return_value = True
                             llm = LLM("default")
@@ -333,7 +332,7 @@ class TestLLMClientFormatMessages:
                             llm = LLM("default")
 
                             messages = [{"role": "user", "content": "Hello"}]
-                            result = llm.format_messages(messages)
+                            llm.format_messages(messages)
 
                             mock_format.assert_called_once()
 

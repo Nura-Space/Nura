@@ -1,6 +1,6 @@
 """Tests for search engine modules."""
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 from nura.tool.search.base import SearchItem, WebSearchEngine
 from nura.tool.search.bing_search import BingSearchEngine

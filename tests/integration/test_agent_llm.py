@@ -1,12 +1,10 @@
 """Integration tests for Agent + LLM system."""
 import pytest
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from nura.agent.base import BaseAgent
 from nura.agent.toolcall import ToolCallAgent
 from nura.tool import BaseTool, ToolCollection
-from nura.core.schema import AgentState, Message
+from nura.core.schema import AgentState
 from pydantic import Field
 
 

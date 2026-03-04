@@ -1,6 +1,5 @@
 """Message tool for sending messages to the user."""
 
-import os
 import re
 import tempfile
 import uuid
@@ -122,7 +121,7 @@ class SendMessage(BaseTool):
                 logger.info(f"Adding emoji {emoji_text} for emotion: {emotion}")
 
         self.cleanup()
-        return self.success_response(f"消息已发送")
+        return self.success_response("消息已发送")
 
     async def _send_voice(self, text: str):
         """Send voice reply using TTS."""

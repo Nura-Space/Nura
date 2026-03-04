@@ -1,10 +1,8 @@
 """Tests for nura/tool/base.py"""
 import pytest
-from unittest.mock import patch
-import json
-from typing import Any, Optional
+from typing import Optional
 
-from nura.tool.base import ToolResult, BaseTool, CLIResult, ToolFailure
+from nura.tool.base import ToolResult, BaseTool, ToolFailure
 
 
 class TestToolResult:

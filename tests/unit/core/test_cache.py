@@ -1,9 +1,7 @@
 """Tests for nura/core/cache.py"""
-import pytest
 import time
-from unittest.mock import patch, MagicMock
 
-from nura.core.cache import CacheManager, SessionData, cache_manager
+from nura.core.cache import CacheManager, SessionData
 
 
 class TestCacheManager:

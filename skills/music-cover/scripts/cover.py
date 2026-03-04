@@ -8,7 +8,6 @@ from pathlib import Path
 
 import httpx
 from loguru import logger
-import sys
 
 REPLAY_HOST = os.environ.get("REPLAY_HOST", "localhost")
 REPLAY_PORT = os.environ.get("REPLAY_PORT", "62362")
@@ -47,7 +46,7 @@ def main():
 
     vocal_path = song_path / "vocal.wav"
     if not vocal_path.exists():
-        logger.error(f"缺少 vocal.wav")
+        logger.error("缺少 vocal.wav")
         sys.exit(1)
 
     # 健康检查

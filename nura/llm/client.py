@@ -3,7 +3,7 @@
 # The factory method call here intentionally mirrors the LLMRequestParams.create() signature.
 # This is a necessary pattern for creating parameterized objects.
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import tiktoken
 from openai import (
@@ -35,7 +35,7 @@ from nura.core.schema import Message, TOOL_CHOICE_TYPE, TOOL_CHOICE_VALUES, Tool
 from nura.llm.adapters import get_message_adapter, is_ark_provider
 from nura.llm.cache import CacheFactory
 from nura.llm.cache.base import LLMRequestParams
-from nura.llm.constants import MULTIMODAL_MODELS, REASONING_MODELS
+from nura.llm.constants import MULTIMODAL_MODELS
 from nura.llm.message import format_messages
 from nura.llm.request import RequestBuilder
 from nura.llm.token_counter import TokenCounter

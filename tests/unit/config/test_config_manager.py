@@ -1,8 +1,6 @@
 """Tests for configuration manager."""
 
 import pytest
-from pathlib import Path
-import tempfile
 
 from nura.config import get_config, ConfigManager
 from nura.config.models import NuraConfig

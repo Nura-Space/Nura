@@ -140,7 +140,7 @@ class TestSkills:
                 mock_run.return_value = "Result"
 
                 # blocking=None should use skill's config
-                result = await tool.execute(skill_name="blocking_skill", user_input="test input")
+                await tool.execute(skill_name="blocking_skill", user_input="test input")
 
                 # Should use blocking mode from skill config
                 mock_run.assert_called_once()

@@ -1,7 +1,6 @@
 """Tests for LLM adapters."""
 import pytest
 from unittest.mock import MagicMock
-from typing import Any, Dict
 
 from nura.llm.adapters.ark import ArkMessageAdapter
 from nura.llm.adapters.base import BaseMessageAdapter

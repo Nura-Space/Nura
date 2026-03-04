@@ -1,7 +1,6 @@
 """Integration tests for LLM client with real API."""
 import os
 import pytest
-import asyncio
 
 from nura.llm.client import LLM
 from nura.core.config import config

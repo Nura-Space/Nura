@@ -1,8 +1,4 @@
 """Tests for nura/core/logger.py"""
-import pytest
-from unittest.mock import patch, MagicMock
-import sys
-from io import StringIO
 
 
 class TestLogger:
@@ -113,7 +109,7 @@ class TestContextLogger:
 
     def test_context_log_does_not_output_to_terminal(self):
         """Test context_log does not output to terminal (stderr)."""
-        from nura.core.logger import context_log, close_context_logger
+        from nura.core.logger import close_context_logger
         import subprocess
 
         # Close any existing logger
@@ -140,7 +136,7 @@ class TestContextLogger:
         logger_module = importlib.import_module("nura.core.logger")
 
         # Ensure logger is open first
-        f1 = logger_module.get_context_logger()
+        logger_module.get_context_logger()
         assert logger_module._context_log_file is not None
 
         # Close it

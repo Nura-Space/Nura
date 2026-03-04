@@ -1,7 +1,7 @@
 """Tests for event-driven agent module."""
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, create_autospec
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from nura.core.schema import AgentState
 
@@ -32,7 +32,6 @@ class MockLaneQueue:
 def make_mock_agent():
     """Create a fully mocked EventDrivenAgent."""
     from nura.agent.event_driven import EventDrivenAgent
-    from nura.tool import EndChat, SendMessage, SendFile, Skills, WebSearch
 
     # First, add MemorySearch mock to nura.tool module
     import nura.tool
@@ -40,7 +39,7 @@ def make_mock_agent():
         nura.tool.MemorySearch = MagicMock(name='memory_search')
 
     # Now we can import and create the agent
-    with patch('nura.agent.toolcall.ToolCallAgent') as mock_agent:
+    with patch('nura.agent.toolcall.ToolCallAgent'):
         with patch('nura.tool.collection.ToolCollection'):
             with patch('nura.context.manager.ContextManager') as mock_context:
                 with patch('nura.core.skill_queue.get_skill_queue'):

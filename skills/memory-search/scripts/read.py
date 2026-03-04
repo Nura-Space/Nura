@@ -72,7 +72,7 @@ def read_memory(filename: str, memory_dir: Path) -> Optional[Dict[str, Any]]:
     file_path = memory_dir / filename
 
     if not validate_path(file_path, memory_dir):
-        print(f"Error: Path traversal attempt detected", file=sys.stderr)
+        print("Error: Path traversal attempt detected", file=sys.stderr)
         return None
 
     if not file_path.exists():

@@ -1,7 +1,6 @@
 """Tests for skill queue module."""
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 from nura.core.skill_queue import (
     SkillQueue,

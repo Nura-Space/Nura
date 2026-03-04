@@ -1,11 +1,9 @@
 """Tests for nura/integrations/base.py"""
-import asyncio
 import json
 import os
 import pytest
 import signal
 import tempfile
-import threading
 from unittest.mock import MagicMock, patch, AsyncMock
 
 from nura.integrations.base import BaseBot
@@ -271,13 +269,13 @@ class TestBaseBotInitializeAgent:
     async def test_initialize_agent_custom_config(self):
         """Test initialize_agent with custom configuration."""
         with patch('nura.integrations.base.EventDrivenAgent') as mock_agent, \
-             patch('nura.integrations.base.ContextConfig') as mock_context_config:
+             patch('nura.integrations.base.ContextConfig'):
             mock_queue = MagicMock()
             mock_agent_instance = MagicMock()
             mock_agent.return_value = mock_agent_instance
 
             bot = MockBot()
-            result = await bot.initialize_agent(
+            await bot.initialize_agent(
                 {"message_collect_seconds": 5.0},
                 mock_queue,
                 "test system prompt"

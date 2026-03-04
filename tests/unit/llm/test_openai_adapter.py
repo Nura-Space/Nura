@@ -11,7 +11,6 @@ class TestOpenAIMessageAdapter:
     @pytest.fixture
     def adapter(self):
         """Create an OpenAIMessageAdapter instance."""
-        from nura.llm.adapters.openai import OpenAIMessageAdapter
         return OpenAIMessageAdapter()
 
     @pytest.mark.unit

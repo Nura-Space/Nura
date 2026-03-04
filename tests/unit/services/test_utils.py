@@ -1,6 +1,6 @@
 """Tests for nura/services/utils.py"""
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch, AsyncMock
 
 from nura.services import utils
 

@@ -26,7 +26,7 @@ class TestCreateChatCompletion:
         tool = CreateChatCompletion(response_type=str)
 
         assert tool.name == "create_chat_completion"
-        assert tool.response_type == str
+        assert tool.response_type is str
         assert "response" in tool.parameters["properties"]
 
     def test_creation_with_pydantic_model(self):

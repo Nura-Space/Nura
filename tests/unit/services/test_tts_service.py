@@ -1,6 +1,6 @@
 """Tests for TTS service module."""
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 import base64
 import json
 

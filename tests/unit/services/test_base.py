@@ -1,6 +1,5 @@
 """Tests for nura/services/base.py"""
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from nura.services.base import BaseClient, ClientFactory
 

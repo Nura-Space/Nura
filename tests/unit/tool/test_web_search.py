@@ -424,7 +424,7 @@ class TestWebSearchToolClass:
         # Mock all search engines to return empty results, forcing error response
         # Also mock sleep to avoid long retry delays in tests
         with patch.object(tool, '_try_all_engines', new_callable=AsyncMock) as mock_search:
-            with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+            with patch('asyncio.sleep', new_callable=AsyncMock):
                 mock_search.return_value = []
                 result = await tool.execute(query="test query")
 

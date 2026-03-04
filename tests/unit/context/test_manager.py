@@ -1,7 +1,4 @@
 """Tests for nura/context/ modules"""
-import pytest
-from unittest.mock import patch, MagicMock
-from typing import Optional
 
 from nura.context.config import ContextConfig
 from nura.context.manager import ContextManager

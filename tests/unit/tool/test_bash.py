@@ -147,7 +147,7 @@ class TestBash:
             MockBashSession.return_value = mock_session
 
             tool._session = None
-            result = await tool.execute(command="echo hello")
+            await tool.execute(command="echo hello")
 
             # Session should be created and started
             MockBashSession.assert_called_once()
