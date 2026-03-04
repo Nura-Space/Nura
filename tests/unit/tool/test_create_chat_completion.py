@@ -1,4 +1,5 @@
 """Unit tests for CreateChatCompletion tool."""
+
 import pytest
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Union
@@ -244,6 +245,7 @@ class TestCreateChatCompletionSchema:
 
     def test_schema_with_nested_model(self):
         """Test schema with nested Pydantic model."""
+
         class NestedModel(BaseModel):
             value: str
 
@@ -257,6 +259,7 @@ class TestCreateChatCompletionSchema:
 
     def test_schema_with_optional_fields(self):
         """Test schema with optional fields."""
+
         class OptionalModel(BaseModel):
             required_field: str
             optional_field: Optional[str] = None
@@ -277,9 +280,7 @@ class TestCreateChatCompletionEdgeCases:
         tool = CreateChatCompletion(response_type=str)
 
         result = await tool.execute(
-            response="test",
-            extra_field="extra",
-            another_field=123
+            response="test", extra_field="extra", another_field=123
         )
 
         assert result == "test"

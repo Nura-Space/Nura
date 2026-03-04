@@ -1,4 +1,5 @@
 """Tests for nura/core/cache.py"""
+
 import time
 
 from nura.core.cache import CacheManager, SessionData
@@ -41,7 +42,7 @@ class TestCacheManager:
         self.cache._sessions[session_id] = SessionData(
             response_id="resp_123",
             expire_at=time.time() - 20,  # Expired 20 seconds ago
-            last_message_count=5
+            last_message_count=5,
         )
         result = self.cache.get_session(session_id)
         assert result is None
@@ -51,9 +52,7 @@ class TestCacheManager:
         session_id = "buffer_session"
         # Set expire_at to 5 seconds from now (within the 10 second buffer)
         self.cache._sessions[session_id] = SessionData(
-            response_id="resp_123",
-            expire_at=time.time() + 5,
-            last_message_count=5
+            response_id="resp_123", expire_at=time.time() + 5, last_message_count=5
         )
         result = self.cache.get_session(session_id)
         assert result is None
@@ -63,9 +62,7 @@ class TestCacheManager:
         session_id = "valid_session"
         expire_at = time.time() + 3600  # 1 hour from now
         self.cache._sessions[session_id] = SessionData(
-            response_id="resp_123",
-            expire_at=expire_at,
-            last_message_count=5
+            response_id="resp_123", expire_at=expire_at, last_message_count=5
         )
         result = self.cache.get_session(session_id)
         assert result is not None
@@ -108,9 +105,7 @@ class TestCacheManager:
         session_id = "existing_session"
         # Create initial session
         self.cache._sessions[session_id] = SessionData(
-            response_id="resp_old",
-            expire_at=time.time() + 3600,
-            last_message_count=5
+            response_id="resp_old", expire_at=time.time() + 3600, last_message_count=5
         )
         # Update it
         expire_at_new = time.time() + 7200
@@ -125,9 +120,7 @@ class TestCacheManager:
         """Test that invalidate_session removes an existing session."""
         session_id = "to_remove"
         self.cache._sessions[session_id] = SessionData(
-            response_id="resp_123",
-            expire_at=time.time() + 3600,
-            last_message_count=5
+            response_id="resp_123", expire_at=time.time() + 3600, last_message_count=5
         )
         self.cache.invalidate_session(session_id)
         assert session_id not in self.cache._sessions

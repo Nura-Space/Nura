@@ -3,6 +3,7 @@
 These tests require real API credentials and are marked with @pytest.mark.live.
 Run with: NURA_LIVE_TEST=1 uv run pytest tests/integration/agent/test_event_driven_live.py -v
 """
+
 import asyncio
 import pytest
 from typing import List
@@ -40,9 +41,9 @@ class MockMessagingClient(BaseClient):
 
     async def send(self, content):
         """Mock send method."""
-        if hasattr(content, 'text'):
+        if hasattr(content, "text"):
             self._sent_messages.append(content.text)
-        elif hasattr(content, 'file_path'):
+        elif hasattr(content, "file_path"):
             self._sent_files.append(content.file_path)
 
 
@@ -73,11 +74,7 @@ def event_queue():
 @pytest.fixture
 def small_context_config():
     """Create small context config to trigger compression easily."""
-    return ContextConfig(
-        max_tokens=1000,
-        compress_threshold=0.3,
-        keep_turns=2
-    )
+    return ContextConfig(max_tokens=1000, compress_threshold=0.3, keep_turns=2)
 
 
 @pytest.mark.live
@@ -105,7 +102,7 @@ class TestEventDrivenAgentLive:
             id="test-1",
             type=EventType.MAIN,
             data={"text": "你好"},
-            conversation_id="conv-1"
+            conversation_id="conv-1",
         )
         await event_queue.put(event)
 
@@ -139,7 +136,7 @@ class TestEventDrivenAgentLive:
             id="test-web-1",
             type=EventType.MAIN,
             data={"text": "今天北京天气怎么样？"},
-            conversation_id="conv-3"
+            conversation_id="conv-3",
         )
         await event_queue.put(event)
 
@@ -170,7 +167,7 @@ class TestEventDrivenAgentLive:
             id="test-end-1",
             type=EventType.MAIN,
             data={"text": "结束对话"},
-            conversation_id="conv-4"
+            conversation_id="conv-4",
         )
         await event_queue.put(event)
 
@@ -201,7 +198,7 @@ class TestEventDrivenAgentLive:
             id="test-file-1",
             type=EventType.MAIN,
             data={"text": "给我看一下那个文件"},
-            conversation_id="conv-5"
+            conversation_id="conv-5",
         )
         await event_queue.put(event)
 
@@ -216,7 +213,9 @@ class TestEventDrivenAgentLive:
         except asyncio.CancelledError:
             pass
 
-    async def test_multi_turn_conversation(self, event_queue, mock_client, small_context_config):
+    async def test_multi_turn_conversation(
+        self, event_queue, mock_client, small_context_config
+    ):
         """Test multi-turn conversation with context compression."""
         agent = EventDrivenAgent(
             lane_queue=event_queue,
@@ -233,8 +232,10 @@ class TestEventDrivenAgentLive:
             event = Event(
                 id=f"test-multi-{i}",
                 type=EventType.MAIN,
-                data={"text": f"这是第 {i+1} 轮对话，我们讨论了机器学习和人工智能的发展"},
-                conversation_id="conv-6"
+                data={
+                    "text": f"这是第 {i+1} 轮对话，我们讨论了机器学习和人工智能的发展"
+                },
+                conversation_id="conv-6",
             )
             await event_queue.put(event)
             await asyncio.sleep(5)  # Wait between messages
@@ -269,11 +270,8 @@ class TestEventDrivenAgentLive:
         event = Event(
             id="test-bg-1",
             type=EventType.BACKGROUND,
-            data={
-                "skill_name": "test_skill",
-                "result": "Task completed successfully"
-            },
-            conversation_id="conv-7"
+            data={"skill_name": "test_skill", "result": "Task completed successfully"},
+            conversation_id="conv-7",
         )
         await event_queue.put(event)
 
@@ -309,7 +307,7 @@ class TestEventDrivenAgentLive:
             id="test-bg-legacy",
             type=EventType.BACKGROUND,
             data=MockTaskResult(),
-            conversation_id="conv-7b"
+            conversation_id="conv-7b",
         )
         await event_queue.put(event)
 
@@ -341,7 +339,7 @@ class TestEventDrivenAgentLive:
             id="test-err-1",
             type=EventType.MAIN,
             data={"text": "你好"},
-            conversation_id="conv-8"
+            conversation_id="conv-8",
         )
         await event_queue.put(event)
         await asyncio.sleep(8)
@@ -376,7 +374,7 @@ class TestEventDrivenAgentLive:
             id="test-unknown",
             type=UnknownEventType(),  # Custom type
             data={"text": "test"},
-            conversation_id="conv-9"
+            conversation_id="conv-9",
         )
         await event_queue.put(event)
 
@@ -410,7 +408,7 @@ class TestEventDrivenAgentLive:
             user_input="test input",
             session_id="conv-10",
             status=SkillStatus.COMPLETED,
-            result="Test result content"
+            result="Test result content",
         )
 
         # Call the callback directly
@@ -446,7 +444,7 @@ class TestEventDrivenAgentLive:
             user_input="test input",
             session_id="conv-11",
             status=SkillStatus.FAILED,
-            result="Error: skill failed"
+            result="Error: skill failed",
         )
 
         # Call the callback directly

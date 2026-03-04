@@ -136,7 +136,9 @@ class RequestBuilder:
         # Calculate cache_ttl
         try:
             config_obj = get_config()
-            cache_ttl = config_obj.llm.get("default", config_obj.llm.get("default")).cache_ttl
+            cache_ttl = config_obj.llm.get(
+                "default", config_obj.llm.get("default")
+            ).cache_ttl
         except (AttributeError, KeyError):
             cache_ttl = 3600
 
@@ -218,9 +220,7 @@ class RequestBuilder:
 
         return params
 
-    def parse_response(
-        self, response: Any, adapter: Optional[Any] = None
-    ) -> Any:
+    def parse_response(self, response: Any, adapter: Optional[Any] = None) -> Any:
         """Parse response from Ark API.
 
         Args:
@@ -234,9 +234,7 @@ class RequestBuilder:
             adapter = ArkMessageAdapter()
         return adapter.parse_response(response)
 
-    def extract_usage(
-        self, response: Any
-    ) -> Optional[Dict[str, Any]]:
+    def extract_usage(self, response: Any) -> Optional[Dict[str, Any]]:
         """Extract usage information from response.
 
         Args:

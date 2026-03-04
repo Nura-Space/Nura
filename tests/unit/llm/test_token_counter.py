@@ -1,4 +1,5 @@
 """Tests for TokenCounter class."""
+
 import pytest
 import tiktoken
 
@@ -142,7 +143,11 @@ class TestTokenCounter:
 
     def test_count_content_list_mixed(self, token_counter):
         """Test counting tokens for list content with mixed items."""
-        content = [{"text": "Hello"}, {"image_url": {"detail": "low"}}, {"text": "World"}]
+        content = [
+            {"text": "Hello"},
+            {"image_url": {"detail": "low"}},
+            {"text": "World"},
+        ]
         tokens = token_counter.count_content(content)
         assert tokens > 0
 
@@ -157,12 +162,7 @@ class TestTokenCounter:
     def test_count_tool_calls(self, token_counter):
         """Test counting tokens for tool calls."""
         tool_calls = [
-            {
-                "function": {
-                    "name": "get_weather",
-                    "arguments": '{"city": "Beijing"}'
-                }
-            }
+            {"function": {"name": "get_weather", "arguments": '{"city": "Beijing"}'}}
         ]
         tokens = token_counter.count_tool_calls(tool_calls)
         assert tokens > 0
@@ -208,10 +208,10 @@ class TestTokenCounter:
                         "id": "call_123",
                         "function": {
                             "name": "get_weather",
-                            "arguments": '{"city": "Beijing"}'
-                        }
+                            "arguments": '{"city": "Beijing"}',
+                        },
                     }
-                ]
+                ],
             }
         ]
         tokens = token_counter.count_message_tokens(messages)
@@ -220,24 +220,14 @@ class TestTokenCounter:
     def test_count_message_tokens_with_tool_call_id(self, token_counter):
         """Test counting tokens for tool result messages."""
         messages = [
-            {
-                "role": "tool",
-                "tool_call_id": "call_123",
-                "content": "Sunny, 25°C"
-            }
+            {"role": "tool", "tool_call_id": "call_123", "content": "Sunny, 25°C"}
         ]
         tokens = token_counter.count_message_tokens(messages)
         assert tokens > 0
 
     def test_count_message_tokens_with_name(self, token_counter):
         """Test counting tokens for messages with name field."""
-        messages = [
-            {
-                "role": "user",
-                "content": "Hello",
-                "name": "user123"
-            }
-        ]
+        messages = [{"role": "user", "content": "Hello", "name": "user123"}]
         tokens = token_counter.count_message_tokens(messages)
         assert tokens > 0
 

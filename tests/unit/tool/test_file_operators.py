@@ -1,4 +1,5 @@
 """Unit tests for file operators."""
+
 import os
 import pytest
 import tempfile
@@ -22,7 +23,7 @@ class TestLocalFileOperator:
         operator = LocalFileOperator()
 
         # Create a temporary file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf-8") as f:
             f.write("test content")
             temp_path = f.name
 
@@ -50,7 +51,7 @@ class TestLocalFileOperator:
         try:
             await operator.write_file(temp_path, "new content")
 
-            with open(temp_path, 'r', encoding='utf-8') as f:
+            with open(temp_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             assert content == "new content"
@@ -69,7 +70,7 @@ class TestLocalFileOperator:
             await operator.write_file(temp_path, "original")
             await operator.write_file(temp_path, "overwritten")
 
-            with open(temp_path, 'r', encoding='utf-8') as f:
+            with open(temp_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             assert content == "overwritten"
@@ -128,7 +129,9 @@ class TestLocalFileOperator:
         operator = LocalFileOperator()
 
         # This command writes to stderr
-        return_code, stdout, stderr = await operator.run_command("ls /nonexistent 2>&1 || true")
+        return_code, stdout, stderr = await operator.run_command(
+            "ls /nonexistent 2>&1 || true"
+        )
 
         # Should handle gracefully
 
@@ -193,7 +196,9 @@ class TestSandboxFileOperator:
 
         await operator.write_file("/sandbox/file.txt", "new content")
 
-        mock_client.write_file.assert_called_once_with("/sandbox/file.txt", "new content")
+        mock_client.write_file.assert_called_once_with(
+            "/sandbox/file.txt", "new content"
+        )
 
     @pytest.mark.asyncio
     async def test_exists_in_sandbox(self):
@@ -281,19 +286,19 @@ class TestFileOperatorProtocol:
         operator = LocalFileOperator()
 
         # Check that it has all required methods
-        assert hasattr(operator, 'read_file')
-        assert hasattr(operator, 'write_file')
-        assert hasattr(operator, 'is_directory')
-        assert hasattr(operator, 'exists')
-        assert hasattr(operator, 'run_command')
+        assert hasattr(operator, "read_file")
+        assert hasattr(operator, "write_file")
+        assert hasattr(operator, "is_directory")
+        assert hasattr(operator, "exists")
+        assert hasattr(operator, "run_command")
 
     def test_sandbox_file_operator_is_file_operator(self):
         """Test that SandboxFileOperator implements FileOperator."""
         operator = SandboxFileOperator()
 
         # Check that it has all required methods
-        assert hasattr(operator, 'read_file')
-        assert hasattr(operator, 'write_file')
-        assert hasattr(operator, 'is_directory')
-        assert hasattr(operator, 'exists')
-        assert hasattr(operator, 'run_command')
+        assert hasattr(operator, "read_file")
+        assert hasattr(operator, "write_file")
+        assert hasattr(operator, "is_directory")
+        assert hasattr(operator, "exists")
+        assert hasattr(operator, "run_command")

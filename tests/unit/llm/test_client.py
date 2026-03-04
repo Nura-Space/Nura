@@ -1,4 +1,5 @@
 """Tests for LLM client module."""
+
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -39,7 +40,7 @@ class TestLLMClient:
                     api_key="test-key",
                     api_version="v1",
                     base_url="https://api.openai.com/v1",
-                    max_input_tokens=100000
+                    max_input_tokens=100000,
                 )
             }
             mock_get_config.return_value = mock_config
@@ -145,7 +146,7 @@ class TestLLMClient:
 
                         messages = [
                             {"role": "user", "content": "Hello"},
-                            {"role": "assistant", "content": "Hi there"}
+                            {"role": "assistant", "content": "Hi there"},
                         ]
 
                         count = llm.count_message_tokens(messages)
@@ -328,7 +329,9 @@ class TestLLMClientFormatMessages:
                 with patch("nura.llm.client.AsyncOpenAI"):
                     with patch("nura.llm.client.get_message_adapter"):
                         with patch("nura.llm.client.format_messages") as mock_format:
-                            mock_format.return_value = [{"role": "user", "content": "Hello"}]
+                            mock_format.return_value = [
+                                {"role": "user", "content": "Hello"}
+                            ]
                             llm = LLM("default")
 
                             messages = [{"role": "user", "content": "Hello"}]

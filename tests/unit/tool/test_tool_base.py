@@ -1,4 +1,5 @@
 """Tests for nura/tool/base.py"""
+
 import pytest
 from typing import Optional
 

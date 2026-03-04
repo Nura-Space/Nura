@@ -1,9 +1,11 @@
 """Global pytest fixtures and configuration."""
+
 import os
 import pytest
 from unittest.mock import MagicMock
 
 # === Environment Isolation ===
+
 
 @pytest.fixture(autouse=True)
 def isolate_environment(tmp_path, monkeypatch):
@@ -37,10 +39,12 @@ def isolate_environment(tmp_path, monkeypatch):
 
 # === LLM Fixtures ===
 
+
 @pytest.fixture
 def llm_config():
     """Load real LLM configuration from default.toml."""
     from nura.core.config import config
+
     # config.llm returns a dict like {'default': LLMSettings(...), ...}
     # Return the default LLMSettings object
     return config.llm.get("default")
@@ -59,7 +63,7 @@ def real_llm(llm_config):
     LLM._instances.clear()
 
     # llm_config fixture now returns LLMSettings object directly
-    llm = LLM(config_name='default', llm_config=llm_config)
+    llm = LLM(config_name="default", llm_config=llm_config)
     yield llm
     # Cleanup after test
     LLM._instances.clear()
@@ -96,12 +100,14 @@ def mock_llm():
 
     return llm
 
+
 def pytest_configure(config):
     """Configure pytest markers."""
     config.addinivalue_line("markers", "unit: Unit tests")
     config.addinivalue_line("markers", "integration: Integration tests")
     config.addinivalue_line("markers", "e2e: End-to-end tests")
     config.addinivalue_line("markers", "live: Live tests with real credentials")
+
 
 def pytest_collection_modifyitems(config, items):
     """Skip live tests unless explicitly enabled."""

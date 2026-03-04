@@ -1,18 +1,18 @@
 """Unit tests for BaseTool."""
+
 import pytest
 from nura.tool.base import BaseTool, ToolResult
 
 
 class SampleTool(BaseTool):
     """Sample tool implementation for testing."""
+
     name: str = "sample_tool"
     description: str = "A sample tool"
     parameters: dict = {
         "type": "object",
-        "properties": {
-            "arg": {"type": "string"}
-        },
-        "required": ["arg"]
+        "properties": {"arg": {"type": "string"}},
+        "required": ["arg"],
     }
 
     async def execute(self, arg: str) -> ToolResult:

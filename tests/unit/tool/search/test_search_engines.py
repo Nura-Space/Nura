@@ -1,4 +1,5 @@
 """Tests for search engine modules."""
+
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -17,7 +18,7 @@ class TestSearchItem:
         item = SearchItem(
             title="Test Title",
             url="https://example.com",
-            description="Test description"
+            description="Test description",
         )
 
         assert item.title == "Test Title"
@@ -27,20 +28,14 @@ class TestSearchItem:
     @pytest.mark.unit
     def test_create_search_item_with_null_description(self):
         """Test creating SearchItem with null description."""
-        item = SearchItem(
-            title="Test Title",
-            url="https://example.com"
-        )
+        item = SearchItem(title="Test Title", url="https://example.com")
 
         assert item.description is None
 
     @pytest.mark.unit
     def test_str_representation(self):
         """Test string representation."""
-        item = SearchItem(
-            title="Test Title",
-            url="https://example.com"
-        )
+        item = SearchItem(title="Test Title", url="https://example.com")
 
         assert str(item) == "Test Title - https://example.com"
 
@@ -100,7 +95,7 @@ class TestBingSearchEngine:
         mock_response.text = mock_html
         mock_response.encoding = "utf-8"
 
-        with patch.object(engine.session, 'get', return_value=mock_response):
+        with patch.object(engine.session, "get", return_value=mock_response):
             results = engine._search_sync("test", num_results=5)
 
             assert len(results) >= 1
@@ -117,7 +112,7 @@ class TestBingSearchEngine:
         mock_response.text = mock_html
         mock_response.encoding = "utf-8"
 
-        with patch.object(engine.session, 'get', return_value=mock_response):
+        with patch.object(engine.session, "get", return_value=mock_response):
             results, next_url = engine._parse_html("https://bing.com/search?q=test")
 
             assert results == []
@@ -128,7 +123,9 @@ class TestBingSearchEngine:
         """Test parsing HTML with exception."""
         engine = BingSearchEngine()
 
-        with patch.object(engine.session, 'get', side_effect=Exception("Network error")):
+        with patch.object(
+            engine.session, "get", side_effect=Exception("Network error")
+        ):
             results, next_url = engine._parse_html("https://bing.com/search?q=test")
 
             assert results == []
@@ -155,7 +152,7 @@ class TestBingSearchEngine:
         mock_response.text = mock_html
         mock_response.encoding = "utf-8"
 
-        with patch.object(engine.session, 'get', return_value=mock_response):
+        with patch.object(engine.session, "get", return_value=mock_response):
             results, next_url = engine._parse_html("https://bing.com/search?q=test")
 
             assert len(results) >= 1
@@ -184,7 +181,7 @@ class TestBingSearchEngine:
         mock_response.text = mock_html
         mock_response.encoding = "utf-8"
 
-        with patch.object(engine.session, 'get', return_value=mock_response):
+        with patch.object(engine.session, "get", return_value=mock_response):
             results, _ = engine._parse_html("https://bing.com/search?q=test")
 
             assert len(results) >= 1
@@ -210,7 +207,7 @@ class TestBingSearchEngine:
         mock_response.text = mock_html
         mock_response.encoding = "utf-8"
 
-        with patch.object(engine.session, 'get', return_value=mock_response):
+        with patch.object(engine.session, "get", return_value=mock_response):
             results, _ = engine._parse_html("https://bing.com/search?q=test")
 
             # Should have fallback title

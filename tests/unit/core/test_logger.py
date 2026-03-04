@@ -98,6 +98,7 @@ class TestContextLogger:
 
         # Find the context log file
         import glob
+
         log_files = glob.glob("logs/context_*.log")
         assert len(log_files) > 0
 
@@ -118,8 +119,11 @@ class TestContextLogger:
         # Run in subprocess to capture stderr
         result = subprocess.run(
             [
-                "uv", "run", "python", "-c",
-                "from nura.core.logger import context_log; context_log('silent test')"
+                "uv",
+                "run",
+                "python",
+                "-c",
+                "from nura.core.logger import context_log; context_log('silent test')",
             ],
             capture_output=True,
             text=True,
@@ -133,6 +137,7 @@ class TestContextLogger:
         """Test close_context_logger closes the file."""
         # Import the module directly using importlib
         import importlib
+
         logger_module = importlib.import_module("nura.core.logger")
 
         # Ensure logger is open first

@@ -1,4 +1,5 @@
 """Tests for LLM cache module."""
+
 import pytest
 import time
 from unittest.mock import MagicMock, AsyncMock, patch
@@ -47,7 +48,9 @@ class TestAskWithArkCache:
 
             with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
                 mock_builder = MagicMock()
-                mock_builder.format_messages.return_value = [{"role": "user", "content": "test"}]
+                mock_builder.format_messages.return_value = [
+                    {"role": "user", "content": "test"}
+                ]
                 mock_builder.count_input_tokens.return_value = 100
                 mock_builder.check_limits.return_value = True
                 mock_builder.build_params.return_value = {"model": "gpt-4"}
@@ -72,7 +75,7 @@ class TestAskWithArkCache:
                         check_token_limit=lambda x: True,
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
-                        temperature=0.7
+                        temperature=0.7,
                     )
 
                     assert result is not None
@@ -90,9 +93,13 @@ class TestAskWithArkCache:
 
             with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
                 mock_builder = MagicMock()
-                mock_builder.format_messages.return_value = [{"role": "user", "content": "test"}]
+                mock_builder.format_messages.return_value = [
+                    {"role": "user", "content": "test"}
+                ]
                 mock_builder.count_input_tokens.return_value = 200000
-                mock_builder.check_limits.side_effect = TokenLimitExceeded("Token limit exceeded")
+                mock_builder.check_limits.side_effect = TokenLimitExceeded(
+                    "Token limit exceeded"
+                )
                 mock_builder_class.return_value = mock_builder
 
                 with patch("nura.llm.cache.ark.config"):
@@ -105,7 +112,7 @@ class TestAskWithArkCache:
                             check_token_limit=lambda x: False,
                             get_limit_error_message=lambda x: "Token limit exceeded",
                             max_tokens=1000,
-                            temperature=0.7
+                            temperature=0.7,
                         )
 
     @pytest.mark.unit
@@ -146,13 +153,16 @@ class TestAskWithArkCache:
                     {"role": "system", "content": "You are helpful"},
                     {"role": "user", "content": "Hello"},
                     {"role": "assistant", "content": "Hi"},
-                    {"role": "user", "content": "test"}
+                    {"role": "user", "content": "test"},
                 ]
                 mock_builder.count_input_tokens.return_value = 100
                 mock_builder.check_limits.return_value = True
 
                 def build_params_side_effect(**kwargs):
-                    return {"model": "gpt-4", "previous_response_id": kwargs.get("previous_response_id")}
+                    return {
+                        "model": "gpt-4",
+                        "previous_response_id": kwargs.get("previous_response_id"),
+                    }
 
                 mock_builder.build_params.side_effect = build_params_side_effect
                 mock_builder.parse_response.return_value = mock_message
@@ -177,11 +187,13 @@ class TestAskWithArkCache:
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
                         temperature=0.7,
-                        session_id="test_session"
+                        session_id="test_session",
                     )
 
                     call_kwargs = mock_client.responses.create.call_args.kwargs
-                    assert call_kwargs.get("previous_response_id") == "prev_response_123"
+                    assert (
+                        call_kwargs.get("previous_response_id") == "prev_response_123"
+                    )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -206,17 +218,27 @@ class TestAskWithArkCache:
         mock_message = MagicMock()
         mock_message.content = "Response"
 
-        tools = [{"type": "function", "function": {"name": "test_tool", "description": "A test tool"}}]
+        tools = [
+            {
+                "type": "function",
+                "function": {"name": "test_tool", "description": "A test tool"},
+            }
+        ]
 
         with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
             mock_cache.get_session.return_value = None
 
             with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
                 mock_builder = MagicMock()
-                mock_builder.format_messages.return_value = [{"role": "user", "content": "test"}]
+                mock_builder.format_messages.return_value = [
+                    {"role": "user", "content": "test"}
+                ]
                 mock_builder.count_input_tokens.return_value = 150  # including tools
                 mock_builder.check_limits.return_value = True
-                mock_builder.build_params.return_value = {"model": "gpt-4", "tools": tools}
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "tools": tools,
+                }
                 mock_builder.parse_response.return_value = mock_message
                 mock_builder.extract_usage.return_value = {
                     "input_tokens": 100,
@@ -239,7 +261,7 @@ class TestAskWithArkCache:
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
                         temperature=0.7,
-                        tools=tools
+                        tools=tools,
                     )
 
                     call_kwargs = mock_client.responses.create.call_args.kwargs
@@ -279,7 +301,7 @@ class TestAskWithArkCache:
                 mock_builder = MagicMock()
                 mock_builder.format_messages.return_value = [
                     {"role": "system", "content": "You are helpful"},
-                    {"role": "user", "content": "test"}
+                    {"role": "user", "content": "test"},
                 ]
                 mock_builder.count_input_tokens.return_value = 100
                 mock_builder.check_limits.return_value = True
@@ -306,7 +328,7 @@ class TestAskWithArkCache:
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
                         temperature=0.7,
-                        system_msgs=system_msgs
+                        system_msgs=system_msgs,
                     )
 
                     # Verify format_messages was called with system_msgs
@@ -347,7 +369,7 @@ class TestAskWithArkCache:
                         check_token_limit=lambda x: True,
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
-                        temperature=0.7
+                        temperature=0.7,
                     )
 
                     assert result is None
@@ -389,9 +411,8 @@ class TestCacheStrategy:
             {"role": "system", "content": "You are helpful"},
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
+            {"role": "user", "content": "How are you?"},
         ]
-
 
         mock_config = MagicMock()
         mock_config.llm = {"cache_strategy": "full"}
@@ -404,7 +425,10 @@ class TestCacheStrategy:
                 mock_builder.format_messages.return_value = full_history
                 mock_builder.count_input_tokens.return_value = 100
                 mock_builder.check_limits.return_value = True
-                mock_builder.build_params.return_value = {"model": "gpt-4", "previous_response_id": "prev_response_123"}
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "previous_response_id": "prev_response_123",
+                }
                 mock_builder.parse_response.return_value = mock_message
                 mock_builder.extract_usage.return_value = {
                     "input_tokens": 100,
@@ -427,11 +451,13 @@ class TestCacheStrategy:
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
                         temperature=0.7,
-                        session_id="test_session"
+                        session_id="test_session",
                     )
 
                     call_kwargs = mock_client.responses.create.call_args.kwargs
-                    assert call_kwargs.get("previous_response_id") == "prev_response_123"
+                    assert (
+                        call_kwargs.get("previous_response_id") == "prev_response_123"
+                    )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -466,9 +492,8 @@ class TestCacheStrategy:
             {"role": "system", "content": "You are helpful"},
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
+            {"role": "user", "content": "How are you?"},
         ]
-
 
         mock_config = MagicMock()
         mock_config.llm = {"cache_strategy": "input_only"}
@@ -481,7 +506,10 @@ class TestCacheStrategy:
                 mock_builder.format_messages.return_value = full_history
                 mock_builder.count_input_tokens.return_value = 100
                 mock_builder.check_limits.return_value = True
-                mock_builder.build_params.return_value = {"model": "gpt-4", "previous_response_id": "prev_response_123"}
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "previous_response_id": "prev_response_123",
+                }
                 mock_builder.parse_response.return_value = mock_message
                 mock_builder.extract_usage.return_value = {
                     "input_tokens": 100,
@@ -504,11 +532,13 @@ class TestCacheStrategy:
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
                         temperature=0.7,
-                        session_id="test_session"
+                        session_id="test_session",
                     )
 
                     call_kwargs = mock_client.responses.create.call_args.kwargs
-                    assert call_kwargs.get("previous_response_id") == "prev_response_123"
+                    assert (
+                        call_kwargs.get("previous_response_id") == "prev_response_123"
+                    )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -543,7 +573,7 @@ class TestCacheStrategy:
             {"role": "system", "content": "You are helpful"},
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
+            {"role": "user", "content": "How are you?"},
         ]
 
         mock_config = MagicMock()
@@ -558,7 +588,10 @@ class TestCacheStrategy:
                 mock_builder.format_messages.return_value = full_history
                 mock_builder.count_input_tokens.return_value = 100
                 mock_builder.check_limits.return_value = True
-                mock_builder.build_params.return_value = {"model": "gpt-4", "previous_response_id": "prev_response_123"}
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "previous_response_id": "prev_response_123",
+                }
                 mock_builder.parse_response.return_value = mock_message
                 mock_builder.extract_usage.return_value = {
                     "input_tokens": 100,
@@ -581,7 +614,7 @@ class TestCacheStrategy:
                         get_limit_error_message=lambda x: "Error",
                         max_tokens=1000,
                         temperature=0.7,
-                        session_id="test_session"
+                        session_id="test_session",
                     )
 
                     mock_builder.format_messages.assert_called()

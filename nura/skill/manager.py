@@ -180,12 +180,20 @@ class SkillManager:
         for skill in all_skills:
             name = escape_xml(skill.name)
             desc = escape_xml(skill.description)
-            available = labels_dict["available"] if skill.available else unavailable_labels.get(lang, unavailable_labels["en"])
+            available = (
+                labels_dict["available"]
+                if skill.available
+                else unavailable_labels.get(lang, unavailable_labels["en"])
+            )
 
             lines.append("  <skill>")
             lines.append(f"    <{labels_dict['name']}>{name}</{labels_dict['name']}>")
-            lines.append(f"    <{labels_dict['description']}>{desc}</{labels_dict['description']}>")
-            lines.append(f"    <{labels_dict['available']}>{available}</{labels_dict['available']}>")
+            lines.append(
+                f"    <{labels_dict['description']}>{desc}</{labels_dict['description']}>"
+            )
+            lines.append(
+                f"    <{labels_dict['available']}>{available}</{labels_dict['available']}>"
+            )
             lines.append("  </skill>")
         lines.append("</skills>")
 

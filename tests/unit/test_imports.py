@@ -1,4 +1,5 @@
 """Test that all core modules can be imported."""
+
 import pytest
 
 
@@ -27,6 +28,7 @@ class TestImports:
     def test_top_level_imports(self):
         """Test top-level package imports."""
         import nura
+
         assert nura.__version__ == "0.1.0"
 
         # Test that key classes are available

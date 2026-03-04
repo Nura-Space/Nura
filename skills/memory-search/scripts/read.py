@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 # Security: Valid filename pattern
 FILENAME_PATTERN = re.compile(r"^event_\d+\.json$")
 
@@ -145,7 +144,11 @@ def format_memory(data: Dict[str, Any]) -> str:
                 name = char.get("name", "unknown")
                 actions = char.get("actions", [])
                 emotion = char.get("emotion", "")
-                action_str = ", ".join(str(a) for a in actions) if isinstance(actions, list) else str(actions)
+                action_str = (
+                    ", ".join(str(a) for a in actions)
+                    if isinstance(actions, list)
+                    else str(actions)
+                )
                 line = f"  - {name}: {action_str}"
                 if emotion:
                     line += f" (emotion: {emotion})"
@@ -164,8 +167,19 @@ def format_memory(data: Dict[str, Any]) -> str:
         lines.append(f"impact: {data['impact']}")
 
     # Any remaining fields not in the standard set
-    standard_fields = {"type", "stage", "summary", "description", "actions", "emotion",
-                       "characters", "prefix", "suffix", "thought", "impact"}
+    standard_fields = {
+        "type",
+        "stage",
+        "summary",
+        "description",
+        "actions",
+        "emotion",
+        "characters",
+        "prefix",
+        "suffix",
+        "thought",
+        "impact",
+    }
     for key, value in data.items():
         if key not in standard_fields and value:
             if isinstance(value, (list, dict)):
@@ -189,9 +203,15 @@ Examples:
         """,
     )
 
-    parser.add_argument("filenames", nargs="+", help="Memory files to read (e.g., event_00001.json)")
+    parser.add_argument(
+        "filenames", nargs="+", help="Memory files to read (e.g., event_00001.json)"
+    )
     parser.add_argument("--json", "-j", action="store_true", help="Output as raw JSON")
-    parser.add_argument("--fields", type=str, help="Comma-separated fields to include (e.g., summary,type,characters.name)")
+    parser.add_argument(
+        "--fields",
+        type=str,
+        help="Comma-separated fields to include (e.g., summary,type,characters.name)",
+    )
 
     args = parser.parse_args()
 

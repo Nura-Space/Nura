@@ -1,4 +1,5 @@
 """LLM client module."""
+
 # pylint: disable=duplicate-code
 # The factory method call here intentionally mirrors the LLMRequestParams.create() signature.
 # This is a necessary pattern for creating parameterized objects.
@@ -62,7 +63,9 @@ class LLM:
             if llm_config is None:
                 # Use new configuration system
                 config_obj = get_config()
-                llm_config = config_obj.llm.get(config_name, config_obj.llm.get("default"))
+                llm_config = config_obj.llm.get(
+                    config_name, config_obj.llm.get("default")
+                )
             self.model = llm_config.model
             self.max_tokens = llm_config.max_tokens
             self.temperature = llm_config.temperature
@@ -329,7 +332,9 @@ class LLM:
                 model=self.model,
                 messages=formatted_messages,
                 max_tokens=self.max_tokens,
-                temperature=temperature if temperature is not None else self.temperature,
+                temperature=(
+                    temperature if temperature is not None else self.temperature
+                ),
                 stream=stream,
             )
 
@@ -490,7 +495,9 @@ class LLM:
                 model=self.model,
                 messages=all_messages,
                 max_tokens=self.max_tokens,
-                temperature=temperature if temperature is not None else self.temperature,
+                temperature=(
+                    temperature if temperature is not None else self.temperature
+                ),
                 stream=stream,
             )
 
@@ -604,7 +611,9 @@ class LLM:
             )
 
             # Calculate input token count (including tools)
-            input_tokens = self._request_builder.count_input_tokens(formatted_messages, tools)
+            input_tokens = self._request_builder.count_input_tokens(
+                formatted_messages, tools
+            )
 
             # Check token limits
             self._request_builder.check_limits(input_tokens)
@@ -620,7 +629,9 @@ class LLM:
                 model=self.model,
                 messages=formatted_messages,
                 max_tokens=self.max_tokens,
-                temperature=temperature if temperature is not None else self.temperature,
+                temperature=(
+                    temperature if temperature is not None else self.temperature
+                ),
                 tools=tools,
                 tool_choice=tool_choice,
                 timeout=timeout,

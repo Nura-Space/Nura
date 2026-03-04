@@ -1,4 +1,5 @@
 """Tests for nura/skill/manager.py"""
+
 import tempfile
 import os
 from pathlib import Path
@@ -25,6 +26,7 @@ class TestSkillManager:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
 
@@ -56,7 +58,7 @@ class TestSkillManager:
             name="test_skill",
             description="Test description",
             content="Test content",
-            file_path="/test/path"
+            file_path="/test/path",
         )
 
         skill = manager.get_skill("test_skill")
@@ -77,14 +79,14 @@ class TestSkillManager:
             description="Desc 1",
             content="Content 1",
             file_path="/path1",
-            available=True
+            available=True,
         )
         manager.skills["skill2"] = Skill(
             name="skill2",
             description="Desc 2",
             content="Content 2",
             file_path="/path2",
-            available=False
+            available=False,
         )
 
         skills = manager.list_skills(filter_unavailable=True)
@@ -99,14 +101,14 @@ class TestSkillManager:
             description="Desc 1",
             content="Content 1",
             file_path="/path1",
-            available=True
+            available=True,
         )
         manager.skills["skill2"] = Skill(
             name="skill2",
             description="Desc 2",
             content="Content 2",
             file_path="/path2",
-            available=False
+            available=False,
         )
 
         skills = manager.list_skills(filter_unavailable=False)
@@ -121,7 +123,7 @@ class TestSkillManager:
             content="Content 1",
             file_path="/path1",
             always=True,
-            available=True
+            available=True,
         )
         manager.skills["skill2"] = Skill(
             name="skill2",
@@ -129,7 +131,7 @@ class TestSkillManager:
             content="Content 2",
             file_path="/path2",
             always=False,
-            available=True
+            available=True,
         )
         manager.skills["skill3"] = Skill(
             name="skill3",
@@ -137,7 +139,7 @@ class TestSkillManager:
             content="Content 3",
             file_path="/path3",
             always=True,
-            available=False
+            available=False,
         )
 
         always_skills = manager.get_always_skills()
@@ -158,7 +160,7 @@ class TestSkillManager:
             description="A test skill",
             content="Content",
             file_path="/path",
-            available=True
+            available=True,
         )
 
         summary = manager.build_skills_summary(lang="en")
@@ -175,7 +177,7 @@ class TestSkillManager:
             description="A test skill",
             content="Content",
             file_path="/path",
-            available=True
+            available=True,
         )
 
         summary = manager.build_skills_summary(lang="zh")
@@ -192,7 +194,7 @@ class TestSkillManager:
             content="Content",
             file_path="/path",
             available=False,
-            requires=SkillRequires(bins=["nonexistent_cmd_xyz"], env=[])
+            requires=SkillRequires(bins=["nonexistent_cmd_xyz"], env=[]),
         )
 
         with patch("shutil.which") as mock_which:

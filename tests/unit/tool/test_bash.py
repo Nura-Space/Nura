@@ -1,4 +1,5 @@
 """Unit tests for Bash tool."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -32,14 +33,12 @@ class TestBash:
         # Mock the _BashSession class
         mock_session = MagicMock()
         mock_session._started = True
-        mock_session.run = AsyncMock(return_value=MagicMock(
-            output="test output",
-            error="",
-            system=None
-        ))
+        mock_session.run = AsyncMock(
+            return_value=MagicMock(output="test output", error="", system=None)
+        )
 
-        with patch.object(_BashSession, '__init__', return_value=None):
-            with patch.object(_BashSession, 'start', new_callable=AsyncMock):
+        with patch.object(_BashSession, "__init__", return_value=None):
+            with patch.object(_BashSession, "start", new_callable=AsyncMock):
                 tool._session = mock_session
                 result = await tool.execute(command="echo test")
 
@@ -55,8 +54,8 @@ class TestBash:
         mock_session.stop = MagicMock()
         mock_session.start = AsyncMock()
 
-        with patch.object(_BashSession, '__init__', return_value=None):
-            with patch.object(_BashSession, 'start', new_callable=AsyncMock):
+        with patch.object(_BashSession, "__init__", return_value=None):
+            with patch.object(_BashSession, "start", new_callable=AsyncMock):
                 tool._session = mock_session
                 result = await tool.execute(command="ls", restart=True)
 
@@ -87,8 +86,8 @@ class TestBash:
         mock_session._started = False
         mock_session.start = AsyncMock()
 
-        with patch.object(_BashSession, '__init__', return_value=None):
-            with patch.object(_BashSession, 'start', new_callable=AsyncMock):
+        with patch.object(_BashSession, "__init__", return_value=None):
+            with patch.object(_BashSession, "start", new_callable=AsyncMock):
                 tool._session = mock_session
                 # This will try to start the session since _started is False
 
@@ -99,17 +98,21 @@ class TestBash:
 
         mock_session = MagicMock()
         mock_session._started = True
-        mock_session.run = AsyncMock(return_value=MagicMock(
-            system="tool must be restarted",
-            error="bash has exited with returncode 1",
-            output=""
-        ))
+        mock_session.run = AsyncMock(
+            return_value=MagicMock(
+                system="tool must be restarted",
+                error="bash has exited with returncode 1",
+                output="",
+            )
+        )
 
-        with patch.object(_BashSession, '__init__', return_value=None):
+        with patch.object(_BashSession, "__init__", return_value=None):
             tool._session = mock_session
             result = await tool.execute(command="ls")
 
-            assert "restart" in result.system.lower() or "exited" in result.error.lower()
+            assert (
+                "restart" in result.system.lower() or "exited" in result.error.lower()
+            )
 
     @pytest.mark.asyncio
     async def test_execute_command_with_error(self):
@@ -118,11 +121,9 @@ class TestBash:
 
         mock_session = MagicMock()
         mock_session._started = True
-        mock_session.run = AsyncMock(return_value=MagicMock(
-            output="",
-            error="error message",
-            system=None
-        ))
+        mock_session.run = AsyncMock(
+            return_value=MagicMock(output="", error="error message", system=None)
+        )
 
         tool._session = mock_session
         result = await tool.execute(command="ls /nonexistent")
@@ -135,15 +136,13 @@ class TestBash:
         tool = Bash()
 
         # Mock the _BashSession constructor
-        with patch('nura.tool.bash._BashSession') as MockBashSession:
+        with patch("nura.tool.bash._BashSession") as MockBashSession:
             mock_session = MagicMock()
             mock_session._started = False
             mock_session.start = AsyncMock()
-            mock_session.run = AsyncMock(return_value=MagicMock(
-                output="output",
-                error="",
-                system=None
-            ))
+            mock_session.run = AsyncMock(
+                return_value=MagicMock(output="output", error="", system=None)
+            )
             MockBashSession.return_value = mock_session
 
             tool._session = None
@@ -186,7 +185,9 @@ class TestBashSession:
         assert session._sentinel == "<<exit>>"
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(__import__("sys").platform == "win32", reason="os.setsid is Unix-only")
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32", reason="os.setsid is Unix-only"
+    )
     async def test_session_start(self):
         """Test starting a session."""
         session = _BashSession()
@@ -202,7 +203,7 @@ class TestBashSession:
         mock_process.stderr._buffer.decode = MagicMock(return_value="")
         mock_process.returncode = None
 
-        with patch('asyncio.create_subprocess_shell', return_value=mock_process):
+        with patch("asyncio.create_subprocess_shell", return_value=mock_process):
             await session.start()
 
             assert session._started is True

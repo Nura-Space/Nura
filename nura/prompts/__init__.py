@@ -51,7 +51,9 @@ def load_prompt_with_context(
     formatter = string.Formatter()
     placeholders = {
         field_name: ""
-        for literal_text, field_name, format_spec, conversion in formatter.parse(template)
+        for literal_text, field_name, format_spec, conversion in formatter.parse(
+            template
+        )
         if field_name and not field_name.startswith("_")
     }
 

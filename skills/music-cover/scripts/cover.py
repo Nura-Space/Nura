@@ -17,9 +17,7 @@ MUSIC_LIBRARY = os.environ.get("MUSIC_LIBRARY")
 JOB_FILE = "/tmp/music_cover_job_id"
 SONG_FILE = "/tmp/music_cover_song"
 
-MODELS = {
-    "韩立": "hanli"
-}
+MODELS = {"韩立": "hanli"}
 
 # 输出到 stdout 避免被 bash 工具标记为 error
 logger.remove()
@@ -68,7 +66,9 @@ def main():
     logger.info(f"歌曲: {args.song}, 模型: {model}, 音高: {args.pitch}")
 
     # 启动任务
-    app_support = os.path.expanduser("~/Library/Application Support/Replay/com.replay.Replay")
+    app_support = os.path.expanduser(
+        "~/Library/Application Support/Replay/com.replay.Replay"
+    )
     data = {
         "outputDirectory": f"{app_support}/outputs",
         "modelsPath": f"{app_support}/models",

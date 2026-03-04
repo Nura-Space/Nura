@@ -19,10 +19,7 @@ class TestContextConfig:
     def test_custom_values(self):
         """Test ContextConfig with custom values."""
         config = ContextConfig(
-            max_tokens=64000,
-            compress_threshold=0.6,
-            keep_turns=5,
-            compress_cooldown=30
+            max_tokens=64000, compress_threshold=0.6, keep_turns=5, compress_cooldown=30
         )
         assert config.max_tokens == 64000
         assert config.compress_threshold == 0.6

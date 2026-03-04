@@ -9,7 +9,6 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 # ============================================================================
 # Core Configuration Models
 # ============================================================================
@@ -54,7 +53,9 @@ class ContextConfig(BaseModel):
     )
 
     # Keep recent N conversation turns
-    keep_turns: int = Field(10, description="Number of recent conversation turns to keep")
+    keep_turns: int = Field(
+        10, description="Number of recent conversation turns to keep"
+    )
 
     # Minimum seconds between compressions
     compress_cooldown: int = Field(
@@ -231,7 +232,9 @@ class FeishuPlatformConfig(BaseModel):
         "profiles/assistant.yaml",
         description="Path to agent profile YAML file (will be loaded dynamically)",
     )
-    memory_dir: Optional[str] = Field(None, description="Memory directory for this platform")
+    memory_dir: Optional[str] = Field(
+        None, description="Memory directory for this platform"
+    )
     enable_voice_reply: bool = Field(False, description="Enable voice reply feature")
     message_collect_seconds: int = Field(
         10, description="Seconds to collect messages before processing"

@@ -1,4 +1,5 @@
 """Integration tests for search engines with real API calls."""
+
 import os
 import pytest
 
@@ -10,7 +11,10 @@ from nura.tool.search.duckduckgo_search import DuckDuckGoSearchEngine
 
 def check_bing_api_key():
     """Check if Bing API key is available."""
-    return bool(os.environ.get("BING_API_KEY") or os.environ.get("BING_SEARCH_V7_SUBSCRIPTION_KEY"))
+    return bool(
+        os.environ.get("BING_API_KEY")
+        or os.environ.get("BING_SEARCH_V7_SUBSCRIPTION_KEY")
+    )
 
 
 HAS_BING_KEY = check_bing_api_key()
@@ -74,7 +78,9 @@ def test_bing_search_with_chinese_query():
 
 @pytest.mark.integration
 @pytest.mark.live
-@pytest.mark.skip(reason="Google search is unreliable in test environment - often times out due to network restrictions")
+@pytest.mark.skip(
+    reason="Google search is unreliable in test environment - often times out due to network restrictions"
+)
 def test_google_search_basic():
     """Test Google search with real API."""
     engine = GoogleSearchEngine()
@@ -87,7 +93,9 @@ def test_google_search_basic():
 
 @pytest.mark.integration
 @pytest.mark.live
-@pytest.mark.skip(reason="DuckDuckGo API is unreliable - often returns connection errors")
+@pytest.mark.skip(
+    reason="DuckDuckGo API is unreliable - often returns connection errors"
+)
 def test_duckduckgo_search_basic():
     """Test DuckDuckGo search with real API."""
     engine = DuckDuckGoSearchEngine()
@@ -123,7 +131,9 @@ def test_all_engines_comparison():
 
 
 @pytest.mark.integration
-@pytest.mark.skip(reason="DuckDuckGo HTML API is unreliable and often returns connection errors")
+@pytest.mark.skip(
+    reason="DuckDuckGo HTML API is unreliable and often returns connection errors"
+)
 def test_search_result_format():
     """Test that all search engines return properly formatted results."""
     engine = DuckDuckGoSearchEngine()

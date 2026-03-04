@@ -1,4 +1,5 @@
 """Base cache abstract class."""
+
 # pylint: disable=duplicate-code
 # The factory method and its calls have similar structure by design.
 

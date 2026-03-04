@@ -1,4 +1,5 @@
 """Tests for skill runner module."""
+
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -26,6 +27,7 @@ class TestSkillRunner:
     @pytest.mark.asyncio
     async def test_run_skill_with_multiple_steps(self, mock_skill):
         """Test skill execution with multiple steps - returns second-to-last step content."""
+
         async def mock_run(input_text):
             return "Step 1: First task\nStep 2: Second task\nStep 3: Final task"
 
@@ -42,6 +44,7 @@ class TestSkillRunner:
     @pytest.mark.asyncio
     async def test_run_skill_with_single_step(self, mock_skill):
         """Test skill execution with single step."""
+
         async def mock_run(input_text):
             return "Step 1: Only one step"
 
@@ -57,6 +60,7 @@ class TestSkillRunner:
     @pytest.mark.asyncio
     async def test_run_skill_with_no_step_markers(self, mock_skill):
         """Test skill execution with no step markers - returns raw result."""
+
         async def mock_run(input_text):
             return "Some plain result without steps"
 
@@ -72,6 +76,7 @@ class TestSkillRunner:
     @pytest.mark.asyncio
     async def test_run_skill_empty_result(self, mock_skill):
         """Test skill execution with empty result."""
+
         async def mock_run(input_text):
             return ""
 
@@ -87,6 +92,7 @@ class TestSkillRunner:
     @pytest.mark.asyncio
     async def test_run_skill_sets_skill_dir_env(self, mock_skill):
         """Test that SKILL_DIR environment variable is set."""
+
         async def mock_run(input_text):
             return "Step 1: Done"
 
@@ -103,13 +109,16 @@ class TestSkillRunner:
     @pytest.mark.asyncio
     async def test_run_skill_system_prompt_format(self, mock_skill):
         """Test that system prompt is correctly formatted."""
+
         async def mock_run(input_text):
             return "Step 1: Done"
 
         mock_agent = MagicMock()
         mock_agent.run = mock_run
 
-        with patch("nura.skill.runner.ToolCallAgent", return_value=mock_agent) as mock_cls:
+        with patch(
+            "nura.skill.runner.ToolCallAgent", return_value=mock_agent
+        ) as mock_cls:
             await SkillRunner.run_skill(mock_skill, "test input")
 
             # Check that agent was created with correct system prompt format

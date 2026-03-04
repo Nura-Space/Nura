@@ -65,9 +65,7 @@ class TestGetConfig:
 
     def test_get_config_with_overrides(self):
         """Test getting configuration with overrides."""
-        config = get_config(
-            overrides={"context": {"max_tokens": 200000}}, reload=True
-        )
+        config = get_config(overrides={"context": {"max_tokens": 200000}}, reload=True)
 
         assert config.context.max_tokens == 200000
 

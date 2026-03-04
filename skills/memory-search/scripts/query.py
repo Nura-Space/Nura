@@ -26,7 +26,6 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
-
 # Security constants
 MAX_RESULTS = 200
 FILENAME_PATTERN = re.compile(r"^event_\d+\.json$")
@@ -112,7 +111,9 @@ def flatten_values(data: Any) -> List[str]:
     return results
 
 
-def match_value(value: str, query: str, regex: "re.Pattern | None" = None, context_len: int = 60) -> Optional[str]:
+def match_value(
+    value: str, query: str, regex: "re.Pattern | None" = None, context_len: int = 60
+) -> Optional[str]:
     """
     Match a string value against a query. Returns context snippet with match highlighted, or None.
 
@@ -170,7 +171,9 @@ class MemoryStore:
     def __init__(self, memory_dir: Path):
         self.memory_dir = memory_dir
 
-    def iter_events(self, sort_key: Optional[str] = None, reverse: bool = False) -> Iterator[Tuple[str, dict]]:
+    def iter_events(
+        self, sort_key: Optional[str] = None, reverse: bool = False
+    ) -> Iterator[Tuple[str, dict]]:
         """
         Iterate all event_*.json files, yielding (filename, data).
 
@@ -232,7 +235,12 @@ class MemoryStore:
         for key, value in data.items():
             path = f"{prefix}.{key}" if prefix else key
             if path not in field_info:
-                field_info[path] = {"count": 0, "values": Counter(), "nested": [], "is_array": False}
+                field_info[path] = {
+                    "count": 0,
+                    "values": Counter(),
+                    "nested": [],
+                    "is_array": False,
+                }
 
             field_info[path]["count"] += 1
 
@@ -269,7 +277,9 @@ class MemoryStore:
 # --- Output formatting ---
 
 
-def format_entry_detail(filename: str, data: dict, matched_fields: Optional[List[str]] = None) -> str:
+def format_entry_detail(
+    filename: str, data: dict, matched_fields: Optional[List[str]] = None
+) -> str:
     """Format a single entry in detail mode."""
     lines = [f"--- {filename} ---"]
     lines.append(f"  type: {data.get('type', 'unknown')}")
@@ -289,7 +299,9 @@ def format_entry_detail(filename: str, data: dict, matched_fields: Optional[List
     return "\n".join(lines)
 
 
-def format_entry_compact(filename: str, data: dict, matched_fields: Optional[List[str]] = None) -> str:
+def format_entry_compact(
+    filename: str, data: dict, matched_fields: Optional[List[str]] = None
+) -> str:
     """Format a single entry in compact mode."""
     type_val = data.get("type", "?")
     stage_val = data.get("stage", "?")
@@ -302,9 +314,15 @@ def format_entry_compact(filename: str, data: dict, matched_fields: Optional[Lis
     return line
 
 
-def format_entry_json(filename: str, data: dict, matched_fields: Optional[List[str]] = None) -> dict:
+def format_entry_json(
+    filename: str, data: dict, matched_fields: Optional[List[str]] = None
+) -> dict:
     """Format a single entry for JSON output."""
-    result = {"file": filename, "type": data.get("type", "unknown"), "stage": data.get("stage", "unknown")}
+    result = {
+        "file": filename,
+        "type": data.get("type", "unknown"),
+        "stage": data.get("stage", "unknown"),
+    }
     if matched_fields:
         result["matches"] = matched_fields
     return result
@@ -422,10 +440,14 @@ def _search_all_fields(
                 if snippet:
                     matched.append(f"{path}: {snippet}")
             elif isinstance(value, (dict, list)):
-                _search_all_fields(value, path, query, regex, context_len, matched, depth + 1)
+                _search_all_fields(
+                    value, path, query, regex, context_len, matched, depth + 1
+                )
     elif isinstance(data, list):
         for i, item in enumerate(data):
-            _search_all_fields(item, prefix, query, regex, context_len, matched, depth + 1)
+            _search_all_fields(
+                item, prefix, query, regex, context_len, matched, depth + 1
+            )
 
 
 def cmd_filter(store: MemoryStore, args: argparse.Namespace):
@@ -465,14 +487,25 @@ def _parse_conditions(condition_strings: List[str]) -> List[dict]:
         # Try != first (before =)
         if "!=" in cs:
             field, value = cs.split("!=", 1)
-            conditions.append({"field": field.strip(), "op": "!=", "value": value.strip()})
+            conditions.append(
+                {"field": field.strip(), "op": "!=", "value": value.strip()}
+            )
         elif "~" in cs:
             field, value = cs.split("~", 1)
             regex = compile_regex(value.strip())
-            conditions.append({"field": field.strip(), "op": "~", "value": value.strip(), "regex": regex})
+            conditions.append(
+                {
+                    "field": field.strip(),
+                    "op": "~",
+                    "value": value.strip(),
+                    "regex": regex,
+                }
+            )
         elif "=" in cs:
             field, value = cs.split("=", 1)
-            conditions.append({"field": field.strip(), "op": "=", "value": value.strip()})
+            conditions.append(
+                {"field": field.strip(), "op": "=", "value": value.strip()}
+            )
         else:
             print(f"Warning: Ignoring invalid condition: {cs}", file=sys.stderr)
     return conditions
@@ -558,11 +591,21 @@ def cmd_list(store: MemoryStore, args: argparse.Namespace):
     if args.format == "json":
         entries = []
         for fn, d, _ in results:
-            entry = {"file": fn, "type": d.get("type", "unknown"), "stage": d.get("stage", "unknown")}
+            entry = {
+                "file": fn,
+                "type": d.get("type", "unknown"),
+                "stage": d.get("stage", "unknown"),
+            }
             if not no_summary:
                 entry["summary"] = (d.get("summary") or d.get("description", ""))[:120]
             entries.append(entry)
-        print(json.dumps({"total": len(entries), "scanned": total_scanned, "entries": entries}, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {"total": len(entries), "scanned": total_scanned, "entries": entries},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
         return
 
     if not results:
@@ -609,7 +652,11 @@ def cmd_fields(store: MemoryStore, args: argparse.Namespace):
             out["fields"][path] = {
                 "count": info["count"],
                 "total": info["total"],
-                "percentage": round(info["count"] / info["total"] * 100, 1) if info["total"] else 0,
+                "percentage": (
+                    round(info["count"] / info["total"] * 100, 1)
+                    if info["total"]
+                    else 0
+                ),
                 "is_array": info["is_array"],
                 "sample_values": [v for v, _ in info["values"].most_common(5)],
             }
@@ -619,7 +666,9 @@ def cmd_fields(store: MemoryStore, args: argparse.Namespace):
     print(f"Found {len(field_info)} fields across {total} files:\n")
 
     # Sort: top-level fields first, then by count desc
-    sorted_fields = sorted(field_info.items(), key=lambda x: (x[0].count("."), -x[1]["count"]))
+    sorted_fields = sorted(
+        field_info.items(), key=lambda x: (x[0].count("."), -x[1]["count"])
+    )
 
     for path, info in sorted_fields:
         count = info["count"]
@@ -653,29 +702,68 @@ def main():
 
     # Common arguments
     def add_common_args(p: argparse.ArgumentParser):
-        p.add_argument("--limit", type=int, default=50, help="Maximum results (default: 50, max: 200)")
-        p.add_argument("--offset", type=int, default=0, help="Skip first N results (pagination)")
-        p.add_argument("--sort", type=str, help="Sort field (prefix with - for reverse, e.g. -file)")
-        p.add_argument("--format", choices=["detail", "compact", "json"], default="detail", help="Output format (default: detail)")
+        p.add_argument(
+            "--limit",
+            type=int,
+            default=50,
+            help="Maximum results (default: 50, max: 200)",
+        )
+        p.add_argument(
+            "--offset", type=int, default=0, help="Skip first N results (pagination)"
+        )
+        p.add_argument(
+            "--sort",
+            type=str,
+            help="Sort field (prefix with - for reverse, e.g. -file)",
+        )
+        p.add_argument(
+            "--format",
+            choices=["detail", "compact", "json"],
+            default="detail",
+            help="Output format (default: detail)",
+        )
 
     # --- search ---
-    p_search = subparsers.add_parser("search", help="Full-text search (keyword or regex)")
+    p_search = subparsers.add_parser(
+        "search", help="Full-text search (keyword or regex)"
+    )
     p_search.add_argument("query", help="Search query (keyword or regex pattern)")
-    p_search.add_argument("-r", "--regex", action="store_true", help="Treat query as regex pattern")
-    p_search.add_argument("--fields", type=str, help="Comma-separated fields to search (e.g. summary,description)")
-    p_search.add_argument("--context", type=int, default=60, help="Context characters around match (default: 60)")
-    p_search.add_argument("--case-sensitive", action="store_true", help="Case-sensitive search")
+    p_search.add_argument(
+        "-r", "--regex", action="store_true", help="Treat query as regex pattern"
+    )
+    p_search.add_argument(
+        "--fields",
+        type=str,
+        help="Comma-separated fields to search (e.g. summary,description)",
+    )
+    p_search.add_argument(
+        "--context",
+        type=int,
+        default=60,
+        help="Context characters around match (default: 60)",
+    )
+    p_search.add_argument(
+        "--case-sensitive", action="store_true", help="Case-sensitive search"
+    )
     add_common_args(p_search)
 
     # --- filter ---
     p_filter = subparsers.add_parser("filter", help="Structured condition filtering")
-    p_filter.add_argument("conditions", nargs="+", help="Conditions: field=value, field~regex, field!=value")
+    p_filter.add_argument(
+        "conditions",
+        nargs="+",
+        help="Conditions: field=value, field~regex, field!=value",
+    )
     add_common_args(p_filter)
 
     # --- stats ---
     p_stats = subparsers.add_parser("stats", help="Aggregate statistics")
-    p_stats.add_argument("--by", type=str, help="Comma-separated fields to group by (default: type)")
-    p_stats.add_argument("--format", choices=["detail", "json"], default="detail", help="Output format")
+    p_stats.add_argument(
+        "--by", type=str, help="Comma-separated fields to group by (default: type)"
+    )
+    p_stats.add_argument(
+        "--format", choices=["detail", "json"], default="detail", help="Output format"
+    )
 
     # --- list ---
     p_list = subparsers.add_parser("list", help="List memory files")
@@ -684,8 +772,12 @@ def main():
 
     # --- fields ---
     p_fields = subparsers.add_parser("fields", help="Discover available fields")
-    p_fields.add_argument("--sample", type=int, default=0, help="Sample N files (0 = all)")
-    p_fields.add_argument("--format", choices=["detail", "json"], default="detail", help="Output format")
+    p_fields.add_argument(
+        "--sample", type=int, default=0, help="Sample N files (0 = all)"
+    )
+    p_fields.add_argument(
+        "--format", choices=["detail", "json"], default="detail", help="Output format"
+    )
 
     args = parser.parse_args()
 

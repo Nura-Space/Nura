@@ -13,7 +13,9 @@ def main():
 
 @main.command()
 @click.option("--platform", default="feishu", help="Platform: feishu, wechat, slack")
-@click.option("--config", default=None, help="Path to custom configuration file (JSON/TOML)")
+@click.option(
+    "--config", default=None, help="Path to custom configuration file (JSON/TOML)"
+)
 def run(platform, config):
     """Run Nura agent with specified platform.
 
@@ -40,9 +42,15 @@ def run(platform, config):
         except Exception as e:
             click.echo(f"Failed to load configuration: {e}", err=True)
             click.echo("\nPlease ensure:")
-            click.echo("  1. config/default.toml exists (copy from default.example.toml)")
-            click.echo("  2. config/platforms/feishu.toml exists (copy from feishu.example.toml)")
-            click.echo("  3. Or set environment variables (FEISHU_APP_ID, FEISHU_APP_SECRET)")
+            click.echo(
+                "  1. config/default.toml exists (copy from default.example.toml)"
+            )
+            click.echo(
+                "  2. config/platforms/feishu.toml exists (copy from feishu.example.toml)"
+            )
+            click.echo(
+                "  3. Or set environment variables (FEISHU_APP_ID, FEISHU_APP_SECRET)"
+            )
             raise click.Abort()
     else:
         click.echo(f"Platform {platform} not supported yet")

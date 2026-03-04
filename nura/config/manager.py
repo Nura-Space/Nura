@@ -198,11 +198,15 @@ class ConfigManager:
 
         # Parse memory settings
         memory_config = config_dict.get("memory", {})
-        memory_settings = MemorySettings(**memory_config) if memory_config else MemorySettings()
+        memory_settings = (
+            MemorySettings(**memory_config) if memory_config else MemorySettings()
+        )
 
         # Parse context settings
         context_config = config_dict.get("context", {})
-        context_settings = ContextConfig(**context_config) if context_config else ContextConfig()
+        context_settings = (
+            ContextConfig(**context_config) if context_config else ContextConfig()
+        )
 
         # Parse core settings
         core_config = config_dict.get("core", {})
@@ -240,14 +244,10 @@ class ConfigManager:
             return {}
 
         # Extract base settings (for default profile)
-        base_settings = {
-            k: v for k, v in llm_config.items() if not isinstance(v, dict)
-        }
+        base_settings = {k: v for k, v in llm_config.items() if not isinstance(v, dict)}
 
         # Extract profile overrides
-        profile_overrides = {
-            k: v for k, v in llm_config.items() if isinstance(v, dict)
-        }
+        profile_overrides = {k: v for k, v in llm_config.items() if isinstance(v, dict)}
 
         # Create default profile
         llm_settings = {}

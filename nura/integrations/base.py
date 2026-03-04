@@ -186,7 +186,9 @@ class BaseBot(ABC):
             if system_prompt:
                 system_prompt += "\n\n"
             system_prompt += f"## Available Skills\n{skills_summary}"
-            logger.info(f"Loaded {len(skills_manager.list_skills(filter_unavailable=False))} skills")
+            logger.info(
+                f"Loaded {len(skills_manager.list_skills(filter_unavailable=False))} skills"
+            )
 
         context_log(system_prompt)
         return system_prompt

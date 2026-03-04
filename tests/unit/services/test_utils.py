@@ -1,4 +1,5 @@
 """Tests for nura/services/utils.py"""
+
 import pytest
 from unittest.mock import patch, AsyncMock
 
@@ -15,7 +16,9 @@ class TestConvertToOpus:
             # Mock successful process
             mock_process = AsyncMock()
             mock_process.returncode = 0
-            mock_process.communicate = AsyncMock(return_value=(b"Conversion complete", b""))
+            mock_process.communicate = AsyncMock(
+                return_value=(b"Conversion complete", b"")
+            )
             mock_exec.return_value = mock_process
 
             result = await utils.convert_to_opus("/input/test.mp3", "/output/test.opus")
@@ -29,7 +32,9 @@ class TestConvertToOpus:
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.returncode = 0
-            mock_process.communicate = AsyncMock(return_value=(b"Conversion complete", b""))
+            mock_process.communicate = AsyncMock(
+                return_value=(b"Conversion complete", b"")
+            )
             mock_exec.return_value = mock_process
 
             result = await utils.convert_to_opus("/input/test.mp3")

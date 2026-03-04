@@ -1,4 +1,5 @@
 """Tests for web search module."""
+
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
@@ -21,7 +22,7 @@ class TestSearchResult:
             url="https://example.com",
             title="Example Title",
             description="Example description",
-            source="google"
+            source="google",
         )
 
         assert result.position == 1
@@ -40,7 +41,7 @@ class TestSearchResult:
             title="Example",
             description="Description",
             source="bing",
-            raw_content="Raw content here"
+            raw_content="Raw content here",
         )
 
         assert result.raw_content == "Raw content here"
@@ -53,7 +54,7 @@ class TestSearchResult:
             url="https://example.com",
             title="Example Title",
             description="Description",
-            source="google"
+            source="google",
         )
 
         assert str(result) == "Example Title (https://example.com)"
@@ -66,7 +67,7 @@ class TestSearchResult:
             url="https://example.com",
             title="",
             description="Description",
-            source="google"
+            source="google",
         )
 
         assert "https://example.com" in str(result)
@@ -78,11 +79,7 @@ class TestSearchMetadata:
     @pytest.mark.unit
     def test_create_metadata(self):
         """Test creating search metadata."""
-        metadata = SearchMetadata(
-            total_results=100,
-            language="en",
-            country="US"
-        )
+        metadata = SearchMetadata(total_results=100, language="en", country="US")
 
         assert metadata.total_results == 100
         assert metadata.language == "en"
@@ -95,11 +92,7 @@ class TestSearchResponse:
     @pytest.mark.unit
     def test_create_response(self):
         """Test creating a search response."""
-        response = SearchResponse(
-            query="test query",
-            results=[],
-            error=None
-        )
+        response = SearchResponse(query="test query", results=[], error=None)
 
         assert response.query == "test query"
         assert response.results == []
@@ -108,21 +101,14 @@ class TestSearchResponse:
     @pytest.mark.unit
     def test_response_with_error(self):
         """Test response with error field."""
-        response = SearchResponse(
-            query="test",
-            error="Some error occurred"
-        )
+        response = SearchResponse(query="test", error="Some error occurred")
 
         assert response.error == "Some error occurred"
 
     @pytest.mark.unit
     def test_response_populate_output_empty_results(self):
         """Test output population with empty results."""
-        response = SearchResponse(
-            query="test query",
-            results=[],
-            error=None
-        )
+        response = SearchResponse(query="test query", results=[], error=None)
 
         result = response.populate_output()
 
@@ -137,15 +123,11 @@ class TestSearchResponse:
                 url="https://example.com",
                 title="Example",
                 description="A description",
-                source="google"
+                source="google",
             )
         ]
 
-        response = SearchResponse(
-            query="test",
-            results=results,
-            error=None
-        )
+        response = SearchResponse(query="test", results=results, error=None)
 
         result = response.populate_output()
 
@@ -162,15 +144,11 @@ class TestSearchResponse:
                 url="https://example.com",
                 title="",
                 description="A description",
-                source="google"
+                source="google",
             )
         ]
 
-        response = SearchResponse(
-            query="test",
-            results=results,
-            error=None
-        )
+        response = SearchResponse(query="test", results=results, error=None)
 
         result = response.populate_output()
 
@@ -188,15 +166,11 @@ class TestSearchResponse:
                 title="Example",
                 description="Description",
                 source="google",
-                raw_content=long_content
+                raw_content=long_content,
             )
         ]
 
-        response = SearchResponse(
-            query="test",
-            results=results,
-            error=None
-        )
+        response = SearchResponse(query="test", results=results, error=None)
 
         result = response.populate_output()
 
@@ -212,21 +186,14 @@ class TestSearchResponse:
                 url="https://example.com",
                 title="Example",
                 description="Description",
-                source="google"
+                source="google",
             )
         ]
 
-        metadata = SearchMetadata(
-            total_results=50,
-            language="zh",
-            country="CN"
-        )
+        metadata = SearchMetadata(total_results=50, language="zh", country="CN")
 
         response = SearchResponse(
-            query="测试",
-            results=results,
-            metadata=metadata,
-            error=None
+            query="测试", results=results, metadata=metadata, error=None
         )
 
         result = response.populate_output()
@@ -239,10 +206,7 @@ class TestSearchResponse:
     @pytest.mark.unit
     def test_response_populate_output_with_error(self):
         """Test that error responses skip population."""
-        response = SearchResponse(
-            query="test",
-            error="Some error"
-        )
+        response = SearchResponse(query="test", error="Some error")
 
         result = response.populate_output()
 
@@ -258,15 +222,11 @@ class TestSearchResponse:
                 url="https://example.com",
                 title="Example",
                 description="  \n  Description with whitespace  \n  ",
-                source="google"
+                source="google",
             )
         ]
 
-        response = SearchResponse(
-            query="test",
-            results=results,
-            error=None
-        )
+        response = SearchResponse(query="test", results=results, error=None)
 
         result = response.populate_output()
 
@@ -309,7 +269,10 @@ class TestWebContentFetcher:
         """Test content fetching with exception."""
         import requests
 
-        with patch("nura.tool.web_search.requests.get", side_effect=requests.RequestException("Network error")):
+        with patch(
+            "nura.tool.web_search.requests.get",
+            side_effect=requests.RequestException("Network error"),
+        ):
             content = await WebContentFetcher.fetch_content("https://example.com")
 
         assert content is None
@@ -364,7 +327,9 @@ class TestWebContentFetcher:
         mock_response.status_code = 200
         mock_response.text = "<html><body>Content</body></html>"
 
-        with patch("nura.tool.web_search.requests.get", return_value=mock_response) as mock_get:
+        with patch(
+            "nura.tool.web_search.requests.get", return_value=mock_response
+        ) as mock_get:
             await WebContentFetcher.fetch_content("https://example.com", timeout=5)
 
             # Verify timeout was passed
@@ -397,6 +362,7 @@ class TestWebSearchToolClass:
     def test_web_search_creation(self):
         """Test creating a WebSearch tool."""
         from nura.tool.web_search import WebSearch
+
         tool = WebSearch()
         assert tool.name == "web_search"
         assert "search" in tool.description.lower()
@@ -405,6 +371,7 @@ class TestWebSearchToolClass:
     def test_web_search_parameters(self):
         """Test WebSearch parameters schema."""
         from nura.tool.web_search import WebSearch
+
         tool = WebSearch()
         params = tool.parameters
 
@@ -420,11 +387,14 @@ class TestWebSearchToolClass:
     async def test_execute_returns_search_response(self):
         """Test that execute returns SearchResponse."""
         from nura.tool.web_search import WebSearch
+
         tool = WebSearch()
         # Mock all search engines to return empty results, forcing error response
         # Also mock sleep to avoid long retry delays in tests
-        with patch.object(tool, '_try_all_engines', new_callable=AsyncMock) as mock_search:
-            with patch('asyncio.sleep', new_callable=AsyncMock):
+        with patch.object(
+            tool, "_try_all_engines", new_callable=AsyncMock
+        ) as mock_search:
+            with patch("asyncio.sleep", new_callable=AsyncMock):
                 mock_search.return_value = []
                 result = await tool.execute(query="test query")
 
@@ -437,6 +407,7 @@ class TestWebSearchToolClass:
     async def test_execute_with_results(self):
         """Test execute with search results."""
         from nura.tool.web_search import WebSearch
+
         tool = WebSearch()
 
         mock_results = [
@@ -445,11 +416,13 @@ class TestWebSearchToolClass:
                 url="https://example.com",
                 title="Example",
                 description="An example page",
-                source="google"
+                source="google",
             )
         ]
 
-        with patch.object(tool, '_try_all_engines', new_callable=AsyncMock) as mock_search:
+        with patch.object(
+            tool, "_try_all_engines", new_callable=AsyncMock
+        ) as mock_search:
             mock_search.return_value = mock_results
             result = await tool.execute(query="test", num_results=5)
 
@@ -462,6 +435,7 @@ class TestWebSearchToolClass:
     async def test_execute_with_fetch_content(self):
         """Test execute with content fetching enabled."""
         from nura.tool.web_search import WebSearch
+
         tool = WebSearch()
 
         mock_results = [
@@ -470,14 +444,18 @@ class TestWebSearchToolClass:
                 url="https://example.com",
                 title="Example",
                 description="An example page",
-                source="google"
+                source="google",
             )
         ]
 
-        with patch.object(tool, '_try_all_engines', new_callable=AsyncMock) as mock_search:
+        with patch.object(
+            tool, "_try_all_engines", new_callable=AsyncMock
+        ) as mock_search:
             mock_search.return_value = mock_results
 
-            with patch.object(tool, '_fetch_content_for_results', new_callable=AsyncMock) as mock_fetch:
+            with patch.object(
+                tool, "_fetch_content_for_results", new_callable=AsyncMock
+            ) as mock_fetch:
                 mock_fetch.return_value = mock_results
                 result = await tool.execute(query="test", fetch_content=True)
 
@@ -487,6 +465,7 @@ class TestWebSearchToolClass:
     def test_to_param(self):
         """Test tool to param conversion."""
         from nura.tool.web_search import WebSearch
+
         tool = WebSearch()
         tool_dict = tool.to_param()
 

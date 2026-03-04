@@ -1,4 +1,5 @@
 """Tests for prompt module."""
+
 import os
 import tempfile
 
@@ -57,7 +58,7 @@ class TestLoadPromptWithContext:
             "style": "Friendly",
             "world": "Modern",
             "relations": "Friend",
-            "notes": "Test notes"
+            "notes": "Test notes",
         }
 
         result = load_prompt_with_context("roleplay", context, "zh")
@@ -89,12 +90,10 @@ class TestBuildRoleplayPrompt:
             "world": "Tech startup",
             "relations": "Colleague",
             "notes": "Loves coffee",
-            "language": "zh"
+            "language": "zh",
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.yaml', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(profile, f)
             profile_path = f.name
 
@@ -117,12 +116,10 @@ class TestBuildRoleplayPrompt:
             "world": "Office",
             "relations": "Colleague",
             "notes": "",
-            "language": "en"
+            "language": "en",
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.yaml', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(profile, f)
             profile_path = f.name
 
@@ -151,12 +148,10 @@ class TestBuildRoleplayPrompt:
             "world": "",
             "relations": "",
             "notes": "",
-            "language": "zh"
+            "language": "zh",
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.yaml', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(profile, f)
             profile_path = f.name
 
@@ -170,13 +165,9 @@ class TestBuildRoleplayPrompt:
     @pytest.mark.unit
     def test_build_with_defaults(self):
         """Test building prompt with minimal profile."""
-        profile = {
-            "name": "DefaultBot"
-        }
+        profile = {"name": "DefaultBot"}
 
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.yaml', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(profile, f)
             profile_path = f.name
 

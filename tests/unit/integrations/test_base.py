@@ -1,4 +1,5 @@
 """Tests for nura/integrations/base.py"""
+
 import json
 import os
 import pytest
@@ -26,9 +27,7 @@ class MockBot(BaseBot):
         self._system_prompt = await self.build_system_prompt(config)
         self._event_queue = await self.initialize_event_queue(config)
         self._agent = await self.initialize_agent(
-            config,
-            self._event_queue,
-            self._system_prompt
+            config, self._event_queue, self._system_prompt
         )
 
     def get_event_handler(self):
@@ -86,7 +85,7 @@ class TestBaseBotLoadConfig:
         bot = MockBot()
         config_data = {"test_key": "test_value"}
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
             config_path = f.name
 
@@ -106,7 +105,7 @@ class TestBaseBotLoadConfig:
         """Test loading config with invalid JSON."""
         bot = MockBot()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("invalid json content")
             config_path = f.name
 
@@ -123,6 +122,7 @@ class TestBaseBotSetupMessagingClient:
     def setup_method(self):
         """Reset ClientFactory state before each test."""
         from nura.services.base import ClientFactory
+
         ClientFactory._clients = {}
         ClientFactory._instances = {}
         ClientFactory._current_platform = None
@@ -135,6 +135,7 @@ class TestBaseBotSetupMessagingClient:
         await bot.setup_messaging_client({})
 
         from nura.services.base import ClientFactory
+
         assert "test_platform" not in ClientFactory._clients
 
     async def test_setup_messaging_client_with_class(self):
@@ -161,6 +162,7 @@ class TestBaseBotSetupTTSService:
     def setup_method(self):
         """Reset ClientFactory state before each test."""
         from nura.services.base import ClientFactory
+
         ClientFactory._clients = {}
         ClientFactory._instances = {}
         ClientFactory._current_platform = None
@@ -172,6 +174,7 @@ class TestBaseBotSetupTTSService:
         await bot.setup_tts_service({"enable_voice_reply": False})
 
         from nura.services.base import ClientFactory
+
         # Should not try to get client when voice is disabled
         assert ClientFactory._instances == {}
 
@@ -185,10 +188,9 @@ class TestBaseBotSetupTTSService:
 
         bot = MockBot()
 
-        await bot.setup_tts_service({
-            "enable_voice_reply": True,
-            "tts_config": {"test": "config"}
-        })
+        await bot.setup_tts_service(
+            {"enable_voice_reply": True, "tts_config": {"test": "config"}}
+        )
 
         # Check that TTS service was called
         mock_client.set_tts_service.assert_called_once()
@@ -202,7 +204,7 @@ class TestBaseBotBuildSystemPrompt:
         mock_manager = MagicMock()
         mock_manager.build_skills_summary.return_value = ""
 
-        with patch('nura.skill.get_skill_manager', return_value=mock_manager):
+        with patch("nura.skill.get_skill_manager", return_value=mock_manager):
             bot = MockBot()
             result = await bot.build_system_prompt({})
 
@@ -212,10 +214,12 @@ class TestBaseBotBuildSystemPrompt:
     async def test_build_system_prompt_with_skills(self):
         """Test build_system_prompt with skills summary."""
         mock_manager = MagicMock()
-        mock_manager.build_skills_summary.return_value = "Skill1: description\nSkill2: description"
+        mock_manager.build_skills_summary.return_value = (
+            "Skill1: description\nSkill2: description"
+        )
         mock_manager.list_skills.return_value = ["skill1", "skill2"]
 
-        with patch('nura.skill.get_skill_manager', return_value=mock_manager):
+        with patch("nura.skill.get_skill_manager", return_value=mock_manager):
             bot = MockBot()
             result = await bot.build_system_prompt({})
 
@@ -228,7 +232,7 @@ class TestBaseBotInitializeEventQueue:
 
     async def test_initialize_event_queue(self):
         """Test initialize_event_queue creates EventQueue."""
-        with patch('nura.integrations.base.EventQueue') as mock_event_queue:
+        with patch("nura.integrations.base.EventQueue") as mock_event_queue:
             mock_queue_instance = MagicMock()
             mock_event_queue.return_value = mock_queue_instance
 
@@ -244,41 +248,39 @@ class TestBaseBotInitializeAgent:
 
     async def test_initialize_agent_default_config(self):
         """Test initialize_agent with default configuration."""
-        with patch('nura.integrations.base.EventDrivenAgent') as mock_agent, \
-             patch('nura.integrations.base.ContextConfig') as mock_context_config:
+        with (
+            patch("nura.integrations.base.EventDrivenAgent") as mock_agent,
+            patch("nura.integrations.base.ContextConfig") as mock_context_config,
+        ):
             mock_queue = MagicMock()
             mock_agent_instance = MagicMock()
             mock_agent.return_value = mock_agent_instance
 
             bot = MockBot()
-            result = await bot.initialize_agent(
-                {},
-                mock_queue,
-                "test system prompt"
-            )
+            result = await bot.initialize_agent({}, mock_queue, "test system prompt")
 
             mock_context_config.assert_called_once_with(
                 max_tokens=128000,
                 compress_threshold=0.5,
                 keep_turns=10,
-                compress_cooldown=60
+                compress_cooldown=60,
             )
             mock_agent.assert_called_once()
             assert result == mock_agent_instance
 
     async def test_initialize_agent_custom_config(self):
         """Test initialize_agent with custom configuration."""
-        with patch('nura.integrations.base.EventDrivenAgent') as mock_agent, \
-             patch('nura.integrations.base.ContextConfig'):
+        with (
+            patch("nura.integrations.base.EventDrivenAgent") as mock_agent,
+            patch("nura.integrations.base.ContextConfig"),
+        ):
             mock_queue = MagicMock()
             mock_agent_instance = MagicMock()
             mock_agent.return_value = mock_agent_instance
 
             bot = MockBot()
             await bot.initialize_agent(
-                {"message_collect_seconds": 5.0},
-                mock_queue,
-                "test system prompt"
+                {"message_collect_seconds": 5.0}, mock_queue, "test system prompt"
             )
 
             # Check that agent was called with custom message_collect_seconds
@@ -304,7 +306,7 @@ class TestBaseBotHelperMethods:
 class TestBaseBotSignalHandlers:
     """Unit tests for signal handlers."""
 
-    @patch('signal.signal')
+    @patch("signal.signal")
     def test_setup_signal_handlers(self, mock_signal):
         """Test _setup_signal_handlers registers handlers."""
         bot = MockBot()

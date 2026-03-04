@@ -1,4 +1,5 @@
 """Ark (Volcengine) cache implementation."""
+
 # pylint: disable=duplicate-code
 # The factory method call here intentionally mirrors the LLMRequestParams.create() signature.
 # This is a necessary pattern for creating parameterized objects.
@@ -136,7 +137,9 @@ class ArkCache(BaseCache):
             input_msgs = formatted_messages
 
         # Count input tokens
-        input_tokens = params.request_builder.count_input_tokens(input_msgs, params.tools)
+        input_tokens = params.request_builder.count_input_tokens(
+            input_msgs, params.tools
+        )
 
         # Check token limits
         params.request_builder.check_limits(input_tokens)
@@ -207,7 +210,9 @@ class ArkCache(BaseCache):
         except (AttributeError, KeyError):
             return "input_only"
 
-    def _log_request(self, previous_response_id: Optional[str], messages: List[dict]) -> None:
+    def _log_request(
+        self, previous_response_id: Optional[str], messages: List[dict]
+    ) -> None:
         """Log request details for debugging.
 
         Args:
