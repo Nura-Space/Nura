@@ -1,8 +1,16 @@
 """Global pytest fixtures and configuration."""
 
+import asyncio
 import os
 import pytest
 from unittest.mock import MagicMock
+
+
+@pytest.fixture(scope="session")
+def event_loop_policy():
+    """Use default event loop policy for all tests."""
+    return asyncio.DefaultEventLoopPolicy()
+
 
 # === Environment Isolation ===
 
