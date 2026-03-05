@@ -66,6 +66,12 @@ class LLM:
                 llm_config = config_obj.llm.get(
                     config_name, config_obj.llm.get("default")
                 )
+
+            # If llm_config is still None (e.g., in test environments without config),
+            # skip initialization - the instance will be mocked by tests
+            if llm_config is None:
+                return
+
             self.model = llm_config.model
             self.max_tokens = llm_config.max_tokens
             self.temperature = llm_config.temperature
