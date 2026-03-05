@@ -31,6 +31,21 @@ MAX_RESULTS = 200
 FILENAME_PATTERN = re.compile(r"^event_\d+\.json$")
 
 
+def extract_event_id(filename: str) -> str:
+    """从文件名提取 ID: event_00042.json -> 42"""
+    match = re.match(r"event_(\d+)\.json", filename)
+    if match:
+        return str(int(match.group(1)))  # 去掉前导零
+    return filename
+
+
+def truncate_text(text: str, max_len: int) -> str:
+    """简单截断文本"""
+    if not text or len(text) <= max_len:
+        return text
+    return text[:max_len] + "..."
+
+
 # --- Core utilities ---
 
 
@@ -347,10 +362,22 @@ def output_results(
 
     print(f"Found {len(results)} {label} (scanned {total_scanned} files):\n")
 
-    for filename, data, matched_fields in results:
-        if fmt == "compact":
-            print(format_entry_compact(filename, data, matched_fields))
-        else:
+    if fmt == "compact":
+        # Markdown 表格格式
+        print("| ID | Type | Stage | Summary | Matches |")
+        print("|---|---|---|---|---|")
+
+        for filename, data, matched_fields in results:
+            event_id = extract_event_id(filename)
+            type_val = data.get("type", "?")
+            stage_val = data.get("stage", "?")
+            summary = truncate_text(data.get("summary", ""), 50)
+            matches = str(len(matched_fields)) if matched_fields else "-"
+
+            print(f"| {event_id} | {type_val} | {stage_val} | {summary} | {matches} |")
+    else:
+        # detail 格式保持不变
+        for filename, data, matched_fields in results:
             print(format_entry_detail(filename, data, matched_fields))
             print()
 
@@ -563,9 +590,17 @@ def cmd_stats(store: MemoryStore, args: argparse.Namespace):
     print(f"Total: {total} memory files\n")
 
     for field, counter in counters.items():
-        print(f"By {field}:")
+        print(f"Statistics by '{field}':\n")
+
+        # Markdown 表格
+        print("| Value | Count | Percentage |")
+        print("|---|---|---|")
+
         for value, count in counter.most_common():
-            print(f"  {value}: {count}")
+            pct = f"{round(count / total * 100, 1)}%" if total > 0 else "0%"
+            value_str = truncate_text(str(value), 30)
+            print(f"| {value_str} | {count} | {pct} |")
+
         print()
 
 
@@ -614,16 +649,30 @@ def cmd_list(store: MemoryStore, args: argparse.Namespace):
 
     print(f"Found {len(results)} entries (total {total_scanned} files):\n")
 
-    for filename, data, _ in results:
-        if args.format == "compact":
-            type_val = data.get("type", "?")
-            stage_val = data.get("stage", "?")
-            if no_summary:
-                print(f"{filename}  [{type_val}/{stage_val}]")
-            else:
-                summary = (data.get("summary") or data.get("description", ""))[:80]
-                print(f"{filename}  [{type_val}/{stage_val}]  {summary}")
+    if args.format == "compact":
+        # Markdown 表格格式
+        if no_summary:
+            print("| ID | Type | Stage |")
+            print("|---|---|---|")
+            for filename, data, _ in results:
+                event_id = extract_event_id(filename)
+                type_val = data.get("type", "?")
+                stage_val = data.get("stage", "?")
+                print(f"| {event_id} | {type_val} | {stage_val} |")
         else:
+            print("| ID | Type | Stage | Summary |")
+            print("|---|---|---|---|")
+            for filename, data, _ in results:
+                event_id = extract_event_id(filename)
+                type_val = data.get("type", "?")
+                stage_val = data.get("stage", "?")
+                summary = truncate_text(
+                    data.get("summary") or data.get("description", ""), 50
+                )
+                print(f"| {event_id} | {type_val} | {stage_val} | {summary} |")
+    else:
+        # detail 格式保持不变
+        for filename, data, _ in results:
             print(f"--- {filename} ---")
             print(f"  type: {data.get('type', 'unknown')}")
             print(f"  stage: {data.get('stage', 'unknown')}")
@@ -647,7 +696,7 @@ def cmd_fields(store: MemoryStore, args: argparse.Namespace):
     total = next(iter(field_info.values()))["total"] if field_info else 0
 
     if args.format == "json":
-        out = {"total_files": total, "fields": {}}
+        out: Dict[str, Any] = {"total_files": total, "fields": {}}
         for path, info in sorted(field_info.items()):
             out["fields"][path] = {
                 "count": info["count"],
@@ -665,27 +714,64 @@ def cmd_fields(store: MemoryStore, args: argparse.Namespace):
 
     print(f"Found {len(field_info)} fields across {total} files:\n")
 
-    # Sort: top-level fields first, then by count desc
-    sorted_fields = sorted(
-        field_info.items(), key=lambda x: (x[0].count("."), -x[1]["count"])
-    )
+    # 构建父子关系，方便生成树形结构
+    field_tree: Dict[str, List[str]] = {}  # {parent_path: [child_paths]}
+    root_fields = []
 
-    for path, info in sorted_fields:
+    for path in field_info.keys():
+        if "." not in path:
+            root_fields.append(path)
+        else:
+            parent = path.rsplit(".", 1)[0]
+            if parent not in field_tree:
+                field_tree[parent] = []
+            field_tree[parent].append(path)
+
+    # 排序：顶层字段按频率降序
+    sorted_roots = sorted(root_fields, key=lambda p: -field_info[p]["count"])
+
+    def print_field_tree(path: str, prefix: str = "", is_last: bool = True):
+        """递归打印树形结构"""
+        info = field_info[path]
         count = info["count"]
-        pct = round(count / total * 100) if total else 0
-        indent = "  " * path.count(".")
+        pct = f"{round(count / total * 100, 1)}%" if total else "0%"
 
-        line = f"  {indent}{path:<30s}  {count}/{total} ({pct}%)"
+        # 只显示字段名（不含完整路径）
+        field_name = path.split(".")[-1]
 
-        if info["is_array"]:
-            line += "  [array]"
+        # 树形符号
+        branch = "└─ " if is_last else "├─ "
 
-        # Show sample values for fields with limited distinct values
+        # 类型标识
+        type_str = "[array]" if info["is_array"] else "       "
+
+        # 示例值
+        sample_values = ""
         if info["values"] and len(info["values"]) <= 20:
-            top_values = [v for v, _ in info["values"].most_common(5)]
-            line += f"  values: {', '.join(top_values)}"
+            top_values = [str(v) for v, _ in info["values"].most_common(3)]
+            sample_values = ", ".join([truncate_text(v, 10) for v in top_values])
 
+        # 打印当前字段
+        line = f"{prefix}{branch}{field_name:<25s}  {count}/{total} ({pct:>6s})  {type_str}"
+        if sample_values:
+            line += f"  {sample_values}"
         print(line)
+
+        # 递归打印子字段
+        children = field_tree.get(path, [])
+        if children:
+            # 按频率排序子字段
+            sorted_children = sorted(children, key=lambda p: -field_info[p]["count"])
+            for i, child in enumerate(sorted_children):
+                is_last_child = i == len(sorted_children) - 1
+                # 更新前缀：如果当前是最后一个，用空格；否则用竖线
+                child_prefix = prefix + ("    " if is_last else "│   ")
+                print_field_tree(child, child_prefix, is_last_child)
+
+    # 打印所有顶层字段
+    for i, root in enumerate(sorted_roots):
+        is_last = i == len(sorted_roots) - 1
+        print_field_tree(root, "", is_last)
 
 
 # --- Main ---
