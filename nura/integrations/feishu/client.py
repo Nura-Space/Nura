@@ -7,7 +7,7 @@ from typing import Optional
 
 import builtins
 import lark_oapi as lark
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.services.base import BaseClient, ClientFactory
 from nura.services.messaging import MessagingService

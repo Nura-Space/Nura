@@ -1,4 +1,5 @@
 """Tests for sandbox client module."""
+
 import pytest
 
 from nura.sandbox.client import LocalSandboxClient
@@ -18,4 +19,5 @@ class TestLocalSandboxClient:
     def test_inherits_from_abc(self):
         """Test that LocalSandboxClient inherits from BaseSandboxClient."""
         from nura.sandbox.client import BaseSandboxClient
+
         assert issubclass(LocalSandboxClient, BaseSandboxClient)

@@ -1,4 +1,5 @@
 """Unit tests for SendFile tool."""
+
 import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -43,17 +44,19 @@ class TestSendFile:
         tool = SendFile()
 
         # Mock file exists
-        with patch('os.path.exists', return_value=True):
+        with patch("os.path.exists", return_value=True):
             # Mock client
             mock_client = MagicMock()
             mock_send = AsyncMock()
             mock_client.send = mock_send
 
-            with patch('nura.tool.send_file._get_client', return_value=mock_client):
-                with patch('nura.tool.send_file.get_audio_duration', return_value=5000):
-                    with patch('nura.tool.send_file.convert_to_opus', return_value=True):
+            with patch("nura.tool.send_file._get_client", return_value=mock_client):
+                with patch("nura.tool.send_file.get_audio_duration", return_value=5000):
+                    with patch(
+                        "nura.tool.send_file.convert_to_opus", return_value=True
+                    ):
                         # Test with mp3 file
-                        result = await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
+                        await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
 
                         # Should try to convert and send
 
@@ -67,17 +70,17 @@ class TestSendFile:
         test_file = os.path.join(temp_dir, "test.opus")
 
         # Create the file
-        with open(test_file, 'wb') as f:
-            f.write(b'test opus content')
+        with open(test_file, "wb") as f:
+            f.write(b"test opus content")
 
         try:
             mock_client = MagicMock()
             mock_send = AsyncMock()
             mock_client.send = mock_send
 
-            with patch('nura.tool.send_file._get_client', return_value=mock_client):
-                with patch('nura.tool.send_file.get_audio_duration', return_value=3000):
-                    result = await tool.execute(file_path=test_file, file_type="opus")
+            with patch("nura.tool.send_file._get_client", return_value=mock_client):
+                with patch("nura.tool.send_file.get_audio_duration", return_value=3000):
+                    await tool.execute(file_path=test_file, file_type="opus")
 
                     # Should send without conversion
         finally:
@@ -95,15 +98,15 @@ class TestSendFile:
         test_file = os.path.join(temp_dir, "test.pdf")
 
         # Create the file
-        with open(test_file, 'wb') as f:
-            f.write(b'test pdf content')
+        with open(test_file, "wb") as f:
+            f.write(b"test pdf content")
 
         try:
             mock_client = MagicMock()
             mock_send = AsyncMock()
             mock_client.send = mock_send
 
-            with patch('nura.tool.send_file._get_client', return_value=mock_client):
+            with patch("nura.tool.send_file._get_client", return_value=mock_client):
                 result = await tool.execute(file_path=test_file, file_type="pdf")
 
                 assert result.output is not None or result.error is not None
@@ -117,15 +120,19 @@ class TestSendFile:
         """Test execute when audio conversion fails."""
         tool = SendFile()
 
-        with patch('os.path.exists', return_value=True):
+        with patch("os.path.exists", return_value=True):
             mock_client = MagicMock()
             mock_send = AsyncMock()
             mock_client.send = mock_send
 
-            with patch('nura.tool.send_file._get_client', return_value=mock_client):
-                with patch('nura.tool.send_file.get_audio_duration', return_value=1000):
-                    with patch('nura.tool.send_file.convert_to_opus', return_value=False):
-                        result = await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
+            with patch("nura.tool.send_file._get_client", return_value=mock_client):
+                with patch("nura.tool.send_file.get_audio_duration", return_value=1000):
+                    with patch(
+                        "nura.tool.send_file.convert_to_opus", return_value=False
+                    ):
+                        result = await tool.execute(
+                            file_path="/tmp/test.mp3", file_type="mp3"
+                        )
 
                         assert result.error is not None
                         assert "转换失败" in result.error
@@ -163,14 +170,14 @@ class TestSendFileEdgeCases:
         temp_dir = os.path.dirname(__file__)
         test_file = os.path.join(temp_dir, "test_exception.txt")
 
-        with open(test_file, 'wb') as f:
-            f.write(b'test content')
+        with open(test_file, "wb") as f:
+            f.write(b"test content")
 
         try:
             mock_client = MagicMock()
             mock_client.send = AsyncMock(side_effect=Exception("Send failed"))
 
-            with patch('nura.tool.send_file._get_client', return_value=mock_client):
+            with patch("nura.tool.send_file._get_client", return_value=mock_client):
                 result = await tool.execute(file_path=test_file, file_type="txt")
 
                 assert result.error is not None
@@ -184,14 +191,16 @@ class TestSendFileEdgeCases:
         """Test execute when get_audio_duration returns None."""
         tool = SendFile()
 
-        with patch('os.path.exists', return_value=True):
+        with patch("os.path.exists", return_value=True):
             mock_client = MagicMock()
             mock_send = AsyncMock()
             mock_client.send = mock_send
 
-            with patch('nura.tool.send_file._get_client', return_value=mock_client):
-                with patch('nura.tool.send_file.get_audio_duration', return_value=None):
-                    with patch('nura.tool.send_file.convert_to_opus', return_value=True):
-                        result = await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
+            with patch("nura.tool.send_file._get_client", return_value=mock_client):
+                with patch("nura.tool.send_file.get_audio_duration", return_value=None):
+                    with patch(
+                        "nura.tool.send_file.convert_to_opus", return_value=True
+                    ):
+                        await tool.execute(file_path="/tmp/test.mp3", file_type="mp3")
 
                         # Should handle None duration gracefully (default to 0)

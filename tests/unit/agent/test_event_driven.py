@@ -1,7 +1,8 @@
 """Tests for event-driven agent module."""
+
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, create_autospec
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from nura.core.schema import AgentState
 
@@ -32,19 +33,19 @@ class MockLaneQueue:
 def make_mock_agent():
     """Create a fully mocked EventDrivenAgent."""
     from nura.agent.event_driven import EventDrivenAgent
-    from nura.tool import EndChat, SendMessage, SendFile, Skills, WebSearch
 
     # First, add MemorySearch mock to nura.tool module
     import nura.tool
-    if not hasattr(nura.tool, 'MemorySearch'):
-        nura.tool.MemorySearch = MagicMock(name='memory_search')
+
+    if not hasattr(nura.tool, "MemorySearch"):
+        nura.tool.MemorySearch = MagicMock(name="memory_search")
 
     # Now we can import and create the agent
-    with patch('nura.agent.toolcall.ToolCallAgent') as mock_agent:
-        with patch('nura.tool.collection.ToolCollection'):
-            with patch('nura.context.manager.ContextManager') as mock_context:
-                with patch('nura.core.skill_queue.get_skill_queue'):
-                    with patch('nura.core.skill_queue.get_skill_worker'):
+    with patch("nura.agent.toolcall.ToolCallAgent"):
+        with patch("nura.tool.collection.ToolCollection"):
+            with patch("nura.context.manager.ContextManager") as mock_context:
+                with patch("nura.core.skill_queue.get_skill_queue"):
+                    with patch("nura.core.skill_queue.get_skill_worker"):
                         mock_context_instance = MagicMock()
                         mock_context_instance._messages = []
                         mock_context.return_value = mock_context_instance
@@ -79,11 +80,11 @@ class TestEventDrivenAgent:
         """Test initialization with custom configuration."""
         from nura.agent.event_driven import EventDrivenAgent
 
-        with patch('nura.agent.toolcall.ToolCallAgent'):
-            with patch('nura.tool.collection.ToolCollection'):
-                with patch('nura.context.manager.ContextManager'):
-                    with patch('nura.core.skill_queue.get_skill_queue'):
-                        with patch('nura.core.skill_queue.get_skill_worker'):
+        with patch("nura.agent.toolcall.ToolCallAgent"):
+            with patch("nura.tool.collection.ToolCollection"):
+                with patch("nura.context.manager.ContextManager"):
+                    with patch("nura.core.skill_queue.get_skill_queue"):
+                        with patch("nura.core.skill_queue.get_skill_worker"):
                             lane_queue = MockLaneQueue()
                             agent = EventDrivenAgent(
                                 lane_queue=lane_queue,
@@ -254,8 +255,11 @@ class TestEventDrivenAgentProcessEvent:
         agent = make_mock_agent()
         agent._running = False
 
-        with patch.object(type(agent), '_handle_main_event', new_callable=AsyncMock) as mock_handler:
+        with patch.object(
+            type(agent), "_handle_main_event", new_callable=AsyncMock
+        ) as mock_handler:
             from nura.event.types import Event, EventType
+
             mock_event = MagicMock(spec=Event)
             mock_event.type = EventType.MAIN
             mock_event.conversation_id = "test_conv"
@@ -272,8 +276,11 @@ class TestEventDrivenAgentProcessEvent:
         agent = make_mock_agent()
         agent._running = False
 
-        with patch.object(type(agent), '_handle_subagent_event', new_callable=AsyncMock) as mock_handler:
+        with patch.object(
+            type(agent), "_handle_subagent_event", new_callable=AsyncMock
+        ) as mock_handler:
             from nura.event.types import Event, EventType
+
             mock_event = MagicMock(spec=Event)
             mock_event.type = EventType.BACKGROUND
             mock_event.conversation_id = "test_conv"

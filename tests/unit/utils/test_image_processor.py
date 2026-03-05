@@ -1,4 +1,5 @@
 """Tests for image processor utility."""
+
 import pytest
 from io import BytesIO
 from PIL import Image

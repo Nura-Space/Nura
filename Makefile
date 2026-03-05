@@ -1,13 +1,17 @@
-.PHONY: test test-unit test-integration test-e2e test-live test-cov test-cov-all test-watch install-dev clean run
+.PHONY: test test-unit test-integration test-e2e test-live test-cov test-cov-all test-watch install-dev clean run lint format
 
 # Install development dependencies (uses uv)
 install-dev:
 	uv pip install -e ".[all]"
 	uv pip install -r requirements-dev.txt
 
-# Run Feishu bot (uses uv)
+# Run Feishu bot
 run:
-	SSL_CERT_FILE=/private/etc/ssl/cert.pem uv run nura run --config examples/feishu_bot/config.json --platform feishu
+	@echo "Cleaning up residual processes..."
+	@pkill -9 -f "nura run.*feishu" 2>/dev/null || true
+	@sleep 1
+	@echo "Starting Feishu bot..."
+	uv run nura run --platform feishu
 
 # Run all tests (unit + integration, exclude e2e and live)
 test:
@@ -20,10 +24,6 @@ test-unit:
 # Run integration tests
 test-integration:
 	uv run pytest tests/integration -v -m integration
-
-# Run E2E tests
-test-e2e:
-	uv run pytest tests/e2e -v -m e2e
 
 # Run live tests (require real credentials)
 test-live:
@@ -49,15 +49,25 @@ test-watch:
 test-parallel:
 	uv run pytest tests/unit tests/integration -n auto
 
+# Lint and format checks
+lint:
+	uv run ruff check nura/
+	uv run black --check nura/
+
+# Format code
+format:
+	uv run black nura/
+	uv run ruff check nura/ --fix
+
 # Clean build artifacts and old logs (logs older than 7 days)
 clean:
-	rm -rf build/ dist/ htmlcov/ .mypy_cache/ .pytest_cache/ .ruff_cache/
-	rm -f *.egg-info .coverage coverage.json coverage_output.txt output.mp3
+	rm -rf *.egg-info build/ dist/ htmlcov/ .mypy_cache/ .pytest_cache/ .ruff_cache/
+	rm -f .coverage coverage.json coverage_output.txt output.mp3
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name ".DS_Store" -delete
 	@if [ -d logs/ ]; then \
-		echo "Cleaning logs older than 7 days..."; \
-		find logs/ -type f -mtime +7 -delete; \
+		echo "Cleaning logs older than 4 days..."; \
+		find logs/ -type f -mtime +4 -delete; \
 		find logs/ -type d -empty -delete; \
 	fi

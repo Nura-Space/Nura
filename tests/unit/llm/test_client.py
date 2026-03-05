@@ -1,9 +1,9 @@
 """Tests for LLM client module."""
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
 from nura.llm.client import LLM
-from nura.core.schema import Message
 
 
 class TestLLMClient:
@@ -29,7 +29,8 @@ class TestLLMClient:
         # Clear instances
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
             mock_config.llm = {
                 "default": MagicMock(
                     model="gpt-4",
@@ -39,9 +40,10 @@ class TestLLMClient:
                     api_key="test-key",
                     api_version="v1",
                     base_url="https://api.openai.com/v1",
-                    max_input_tokens=100000
+                    max_input_tokens=100000,
                 )
             }
+            mock_get_config.return_value = mock_config
 
             llm1 = LLM("default")
             llm2 = LLM("default")
@@ -53,7 +55,7 @@ class TestLLMClient:
         """Test LLM initialization."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -63,7 +65,10 @@ class TestLLMClient:
             mock_llm_cfg.api_version = "v1"
             mock_llm_cfg.base_url = "https://api.openai.com/v1"
             mock_llm_cfg.max_input_tokens = 100000
+
+            mock_config = MagicMock()
             mock_config.llm = {"default": mock_llm_cfg}
+            mock_get_config.return_value = mock_config
 
             with patch("nura.llm.client.tiktoken") as mock_tiktoken:
                 mock_encoder = MagicMock()
@@ -84,7 +89,9 @@ class TestLLMClient:
         """Test token counting."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -114,7 +121,9 @@ class TestLLMClient:
         """Test message token counting."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -137,7 +146,7 @@ class TestLLMClient:
 
                         messages = [
                             {"role": "user", "content": "Hello"},
-                            {"role": "assistant", "content": "Hi there"}
+                            {"role": "assistant", "content": "Hi there"},
                         ]
 
                         count = llm.count_message_tokens(messages)
@@ -149,7 +158,9 @@ class TestLLMClient:
         """Test token limit check when within limit."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -180,7 +191,9 @@ class TestLLMClient:
         """Test token limit check when exceeding limit."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -211,7 +224,9 @@ class TestLLMClient:
         """Test error message generation."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -241,7 +256,9 @@ class TestLLMClient:
         """Test _has_ark_cached method."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -259,7 +276,7 @@ class TestLLMClient:
                 mock_tiktoken.encoding_for_model.return_value = mock_encoder
 
                 with patch("nura.llm.client.AsyncOpenAI"):
-                    with patch("nura.llm.client.get_message_adapter") as mock_adapter:
+                    with patch("nura.llm.client.get_message_adapter"):
                         with patch("nura.llm.client.is_ark_provider") as mock_is_ark:
                             mock_is_ark.return_value = True
                             llm = LLM("default")
@@ -290,7 +307,9 @@ class TestLLMClientFormatMessages:
         """Test format_messages method."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000
@@ -310,11 +329,13 @@ class TestLLMClientFormatMessages:
                 with patch("nura.llm.client.AsyncOpenAI"):
                     with patch("nura.llm.client.get_message_adapter"):
                         with patch("nura.llm.client.format_messages") as mock_format:
-                            mock_format.return_value = [{"role": "user", "content": "Hello"}]
+                            mock_format.return_value = [
+                                {"role": "user", "content": "Hello"}
+                            ]
                             llm = LLM("default")
 
                             messages = [{"role": "user", "content": "Hello"}]
-                            result = llm.format_messages(messages)
+                            llm.format_messages(messages)
 
                             mock_format.assert_called_once()
 
@@ -340,7 +361,9 @@ class TestLLMClientTokenTracking:
         """Test token count update."""
         LLM._instances = {}
 
-        with patch("nura.llm.client.config") as mock_config:
+        with patch("nura.llm.client.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_get_config.return_value = mock_config
             mock_llm_cfg = MagicMock()
             mock_llm_cfg.model = "gpt-4"
             mock_llm_cfg.max_tokens = 1000

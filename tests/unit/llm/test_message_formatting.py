@@ -1,4 +1,5 @@
 """Tests for LLM message formatting."""
+
 import pytest
 
 from nura.llm import LLM
@@ -56,11 +57,7 @@ class TestMessageFormatting:
         """Test formatting with tool message."""
         messages = [
             {"role": "user", "content": "What's the weather?"},
-            {
-                "role": "tool",
-                "tool_call_id": "call_123",
-                "content": "Sunny, 25°C"
-            },
+            {"role": "tool", "tool_call_id": "call_123", "content": "Sunny, 25°C"},
         ]
         formatted = LLM.format_messages(messages)
         assert len(formatted) == 2
@@ -73,7 +70,7 @@ class TestMessageFormatting:
             {
                 "role": "user",
                 "content": "What's in this image?",
-                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
             },
         ]
         formatted = LLM.format_messages(messages, supports_images=True)
@@ -88,7 +85,7 @@ class TestMessageFormatting:
             {
                 "role": "user",
                 "content": "What's in this image?",
-                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
             },
         ]
         formatted = LLM.format_messages(messages, supports_images=False)
@@ -102,7 +99,7 @@ class TestMessageFormatting:
             {
                 "role": "user",
                 "content": "Describe this",
-                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
             },
         ]
         formatted = LLM.format_messages(messages, supports_images=True)
@@ -119,7 +116,7 @@ class TestMessageFormatting:
             {
                 "role": "user",
                 "content": [{"type": "text", "text": "Describe this"}],
-                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                "base64_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
             },
         ]
         formatted = LLM.format_messages(messages, supports_images=True)
@@ -177,10 +174,10 @@ class TestMessageFormatting:
                         "type": "function",
                         "function": {
                             "name": "get_weather",
-                            "arguments": '{"city": "Beijing"}'
-                        }
+                            "arguments": '{"city": "Beijing"}',
+                        },
                     }
-                ]
+                ],
             }
         ]
         formatted = LLM.format_messages(messages)

@@ -1,0 +1,54 @@
+# Nura Configuration Example
+# 配置示例文件 - 复制为 config/default.toml 并填写实际值
+# Example configuration - Copy to config/default.toml and fill in actual values
+
+# ============================================================================
+# LLM Configuration / LLM 配置
+# ============================================================================
+[llm]
+model = "gpt-4"                                                         # 模型名称 / Model name
+base_url = "https://api.openai.com/v1"                                  # API 端点 / API endpoint
+api_key = "your-api-key-here"                                          # API 密钥（建议使用环境变量 NURA_LLM_API_KEY）/ API key
+api_type = "openai"                                                     # API 类型 / API type: "openai", "azure", "aws"
+max_tokens = 4096                                                       # 最大生成 token 数 / Max tokens
+temperature = 1.0                                                       # 采样温度 / Temperature
+cache_ttl = 3600                                                        # 缓存过期时间（秒）/ Cache TTL
+cache_strategy = "input_only"                                           # 缓存策略 / Cache strategy
+
+# Vision model (optional)
+[llm.vision]
+model = "gpt-4-vision"
+base_url = "https://api.openai.com/v1"
+api_key = "your-api-key-here"
+api_type = "openai"
+max_tokens = 4096
+temperature = 1.0
+
+# ============================================================================
+# Context Management / 上下文管理
+# ============================================================================
+[context]
+max_tokens = 128000                                                     # 上下文窗口大小 / Context window size
+compress_threshold = 0.5                                                # 压缩阈值 / Compress threshold
+keep_turns = 10                                                         # 保留最近对话轮数 / Keep recent turns
+compress_cooldown = 60                                                  # 压缩冷却时间（秒）/ Compress cooldown
+
+# ============================================================================
+# Memory Storage / 记忆存储
+# ============================================================================
+[memory]
+memory_dir = "/path/to/memory"                                         # 记忆存储目录 / Memory directory
+
+# ============================================================================
+# Browser Automation / 浏览器自动化
+# ============================================================================
+[browser]
+headless = false
+disable_security = true
+chrome_instance_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+extra_chromium_args = []
+max_content_length = 2000
+
+# ============================================================================
+# Other sections follow the same pattern as default.toml
+# ============================================================================

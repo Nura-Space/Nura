@@ -1,4 +1,5 @@
 """Unit tests for Skills tool."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -31,13 +32,15 @@ class TestSkills:
         """Test execute with non-existent skill."""
         tool = Skills()
 
-        with patch('nura.skill.get_skill_manager') as mock_get_manager:
+        with patch("nura.skill.get_skill_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_manager.get_skill.return_value = None
             mock_manager.list_skills.return_value = []
             mock_get_manager.return_value = mock_manager
 
-            result = await tool.execute(skill_name="nonexistent", user_input="test input")
+            result = await tool.execute(
+                skill_name="nonexistent", user_input="test input"
+            )
 
             assert result.error is not None
             assert "not found" in result.error.lower()
@@ -54,13 +57,15 @@ class TestSkills:
         mock_skill.requires = ["some_package"]
         mock_skill.blocking = False
 
-        with patch('nura.skill.get_skill_manager') as mock_get_manager:
+        with patch("nura.skill.get_skill_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_manager.get_skill.return_value = mock_skill
             mock_manager._get_missing_requirements.return_value = "some_package"
             mock_get_manager.return_value = mock_manager
 
-            result = await tool.execute(skill_name="unavailable_skill", user_input="test input")
+            result = await tool.execute(
+                skill_name="unavailable_skill", user_input="test input"
+            )
 
             assert result.error is not None
             assert "not available" in result.error.lower()
@@ -75,16 +80,20 @@ class TestSkills:
         mock_skill.available = True
         mock_skill.blocking = True
 
-        with patch('nura.skill.get_skill_manager') as mock_get_manager:
+        with patch("nura.skill.get_skill_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_manager.get_skill.return_value = mock_skill
             mock_get_manager.return_value = mock_manager
 
-            with patch('nura.skill.runner.SkillRunner.run_skill', new_callable=AsyncMock) as mock_run:
+            with patch(
+                "nura.skill.runner.SkillRunner.run_skill", new_callable=AsyncMock
+            ) as mock_run:
                 mock_run.return_value = "Skill execution result"
 
                 # Pass blocking=True to override skill's blocking setting
-                result = await tool.execute(skill_name="test_skill", user_input="test input", blocking=True)
+                result = await tool.execute(
+                    skill_name="test_skill", user_input="test input", blocking=True
+                )
 
                 assert result.output is not None
                 mock_run.assert_called_once()
@@ -99,7 +108,7 @@ class TestSkills:
         mock_skill.available = True
         mock_skill.blocking = False
 
-        with patch('nura.skill.get_skill_manager') as mock_get_manager:
+        with patch("nura.skill.get_skill_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_manager.get_skill.return_value = mock_skill
             mock_get_manager.return_value = mock_manager
@@ -110,12 +119,16 @@ class TestSkills:
             tool._skill_queue = mock_queue
 
             # Mock ClientFactory
-            with patch('nura.services.base.ClientFactory.get_current_client') as mock_client:
+            with patch(
+                "nura.services.base.ClientFactory.get_current_client"
+            ) as mock_client:
                 mock_client_instance = MagicMock()
                 mock_client_instance.chat_id = "test_session"
                 mock_client.return_value = mock_client_instance
 
-                result = await tool.execute(skill_name="test_skill", user_input="test input", blocking=False)
+                result = await tool.execute(
+                    skill_name="test_skill", user_input="test input", blocking=False
+                )
 
                 assert result.output is not None
                 assert "已启动" in result.output or "queued" in result.output.lower()
@@ -131,16 +144,18 @@ class TestSkills:
         mock_skill.available = True
         mock_skill.blocking = True
 
-        with patch('nura.skill.get_skill_manager') as mock_get_manager:
+        with patch("nura.skill.get_skill_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_manager.get_skill.return_value = mock_skill
             mock_get_manager.return_value = mock_manager
 
-            with patch('nura.skill.runner.SkillRunner.run_skill', new_callable=AsyncMock) as mock_run:
+            with patch(
+                "nura.skill.runner.SkillRunner.run_skill", new_callable=AsyncMock
+            ) as mock_run:
                 mock_run.return_value = "Result"
 
                 # blocking=None should use skill's config
-                result = await tool.execute(skill_name="blocking_skill", user_input="test input")
+                await tool.execute(skill_name="blocking_skill", user_input="test input")
 
                 # Should use blocking mode from skill config
                 mock_run.assert_called_once()
@@ -169,7 +184,7 @@ class TestSkillsErrorHandling:
         mock_skill.available = True
         mock_skill.blocking = False
 
-        with patch('nura.skill.get_skill_manager') as mock_get_manager:
+        with patch("nura.skill.get_skill_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_manager.get_skill.return_value = mock_skill
             mock_get_manager.return_value = mock_manager
@@ -179,12 +194,16 @@ class TestSkillsErrorHandling:
             mock_queue.put = AsyncMock(return_value=False)  # Queue is full
             tool._skill_queue = mock_queue
 
-            with patch('nura.services.base.ClientFactory.get_current_client') as mock_client:
+            with patch(
+                "nura.services.base.ClientFactory.get_current_client"
+            ) as mock_client:
                 mock_client_instance = MagicMock()
                 mock_client_instance.chat_id = "test_session"
                 mock_client.return_value = mock_client_instance
 
-                result = await tool.execute(skill_name="test_skill", user_input="test input")
+                result = await tool.execute(
+                    skill_name="test_skill", user_input="test input"
+                )
 
                 assert result.error is not None
 
@@ -198,15 +217,19 @@ class TestSkillsErrorHandling:
         mock_skill.available = True
         mock_skill.blocking = True
 
-        with patch('nura.skill.get_skill_manager') as mock_get_manager:
+        with patch("nura.skill.get_skill_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_manager.get_skill.return_value = mock_skill
             mock_get_manager.return_value = mock_manager
 
-            with patch('nura.skill.runner.SkillRunner.run_skill', new_callable=AsyncMock) as mock_run:
+            with patch(
+                "nura.skill.runner.SkillRunner.run_skill", new_callable=AsyncMock
+            ) as mock_run:
                 mock_run.side_effect = Exception("Execution failed")
 
-                result = await tool.execute(skill_name="test_skill", user_input="test input", blocking=True)
+                result = await tool.execute(
+                    skill_name="test_skill", user_input="test input", blocking=True
+                )
 
                 assert result.error is not None
                 assert "failed" in result.error.lower()

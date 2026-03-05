@@ -1,199 +1,394 @@
 # Nura - Universal Event-Driven AI Agent Platform
 
-Nura is a universal event-driven AI Agent platform that integrates:
-- **OpenManus core** (Agent, Tool, Flow, Skill systems)
-- **Event-driven architecture** (EventQueue, Context Management)
-- **Platform abstraction** (MessagingService, TTSService)
-- **Token-optimized context** (50% threshold compression with Ark cache)
+<div align="center">
 
-## Architecture
+[English](README.md) | [简体中文](README.zh.md)
 
-```
-nura/
-├── core/           # Core schemas and utilities (from OpenManus)
-├── llm/            # LLM abstraction with Ark cache support
-├── tool/           # Tool system (merged OpenManus + Virtual-IP)
-├── agent/          # Agent implementations (Base, ReAct, ToolCall, Manus)
-├── flow/           # Multi-agent coordination (Planning Flow)
-├── skill/          # Skill system (dynamic discovery & execution)
-├── event/          # Event-driven system (dual-priority queue)
-├── context/        # Token-based context compression (50% threshold)
-├── services/       # Service abstractions (Messaging, TTS)
-└── integrations/   # Platform plugins (Feishu, WeChat, Slack)
-```
+[![CI](https://github.com/baikai-li/nura/actions/workflows/ci.yml/badge.svg)](https://github.com/baikai-li/nura/actions)
+[![codecov](https://codecov.io/gh/baikai-li/nura/branch/main/graph/badge.svg)](https://codecov.io/gh/baikai-li/nura)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Quick Start
+</div>
+
+Nura is a production-ready, event-driven AI agent platform built for building intelligent, scalable conversational AI applications. With ~12k lines of Python code, it provides a complete framework for creating AI agents that can interact across multiple platforms.
+
+## 🌟 Key Features
+
+### 🎯 Core Capabilities
+
+- **Event-Driven Architecture** - Dual-priority queue (Main/Background) with intelligent debouncing for batched processing
+- **Smart Context Management** - Automatic token optimization with 50% threshold compression using turn-based summarization
+- **Type-Safe Configuration** - Unified Pydantic-based config system with 4-layer merging (code → files → env vars → runtime)
+- **Multi-Provider LLM Support** - OpenAI, Azure, AWS Bedrock, Ark (Volcengine) with intelligent caching
+- **Dynamic Tool System** - Extensible tool framework with automatic discovery and validation
+- **YAML-Based Skills** - Define complex workflows in simple YAML files with progressive disclosure
+
+### 🤖 Agent System
+
+Multiple agent types for different use cases:
+
+- **BaseAgent** - Foundation with state management (IDLE, RUNNING, FINISHED, ERROR)
+- **ReActAgent** - Reasoning and acting with chain-of-thought
+- **ToolCallAgent** - Specialized for tool execution workflows
+- **Manus** - General-purpose task handling
+- **EventDrivenAgent** - Async event-based workflows
+
+### 🔌 Platform Integrations
+
+- **Feishu (Lark)** - Full-featured WebSocket bot with text, audio, file messaging, emoji support, and TTS
+- **Extensible Design** - Easy to add WeChat, Slack, Discord, Telegram integrations
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.12 or higher
+- [uv](https://github.com/astral-sh/uv) (recommended) or pip
 
 ### Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/nura.git
+# Clone the repository
+git clone https://github.com/baikai-li/nura.git
 cd nura
 
-# Setup development environment (uses uv)
-./setup-dev-env.sh
-
-# Or manual setup with uv
+# Install with uv (recommended)
 uv pip install -e ".[all]"
+
+# Or with pip
+pip install -e ".[all]"
 ```
 
-### Running Feishu Bot Example
+### Basic Configuration
+
+1. **Copy configuration templates**:
+   ```bash
+   cp config/default.example.toml config/default.toml
+   cp .env.example .env
+   ```
+
+2. **Edit `.env` with your credentials**:
+   ```bash
+   # LLM Configuration
+   NURA_LLM_API_KEY=your-openai-api-key
+   NURA_LLM_MODEL=gpt-4
+
+   # For Feishu integration
+   FEISHU_APP_ID=cli_xxx
+   FEISHU_APP_SECRET=secret_xxx
+   ```
+
+3. **Customize `config/default.toml`** for advanced settings
+
+### Running the Feishu Bot
 
 ```bash
-# Configure
-cd examples/feishu_bot
-cp config.example.json config.json
-# Edit config.json with your credentials
+# Run with Makefile (recommended)
+make run
 
-# Run (uses uv automatically)
-nura run --config examples/feishu_bot/config.json --platform feishu
+# Or use Nura CLI directly
+nura run --platform feishu
 ```
 
-## Development
+## 📚 Architecture
+
+### System Overview
+
+```
+┌─────────────────┐
+│   User Input    │
+└────────┬────────┘
+         ↓
+┌────────────────────────────────┐
+│         EventQueue             │
+│  ┌──────────┐    ┌──────────┐  │
+│  │   Main   │    │Background│  │
+│  │ Priority │    │ Priority │  │
+│  └──────────┘    └──────────┘  │
+└────────┬───────────────────────┘
+         ↓
+    ┌──────────┐
+    │ Debounce │ (Batch similar events)
+    └────┬─────┘
+         ↓
+┌─────────────────────┐
+│  EventDrivenAgent   │
+│  ┌───────────────┐  │
+│  │Context Manager│  │ ← Token compression at 50%
+│  └───────────────┘  │
+│  ┌───────────────┐  │
+│  │ Tool Executor │  │
+│  └───────────────┘  │
+└────────┬────────────┘
+         ↓
+     ┌───────┐
+     │  LLM  │ (OpenAI/Azure/Bedrock/Ark)
+     └───┬───┘
+         ↓
+┌────────────────────┐
+│  MessagingService  │
+└────────┬───────────┘
+         ↓
+┌─────────────────────┐
+│   Platform Output   │
+│ (Feishu/Slack/etc.) │
+└─────────────────────┘
+```
+
+### Directory Structure
+
+```
+nura/
+├── agent/           # Agent implementations (BaseAgent, ReAct, ToolCall)
+├── config/          # Unified configuration system
+├── context/         # Token-optimized context management
+├── core/            # Core schemas, exceptions, utilities
+├── event/           # Event-driven system with dual-priority queue
+├── integrations/    # Platform integrations (Feishu, etc.)
+├── llm/             # LLM abstraction layer with caching
+├── prompts/         # System prompts for agents
+├── sandbox/         # Code execution sandbox
+├── services/        # Service interfaces (Messaging, TTS)
+├── skill/           # YAML-based skill system
+├── tool/            # Dynamic tool discovery and execution
+└── utils/           # Shared utilities
+```
+
+## 🔧 Configuration System
+
+Nura features a modern, type-safe configuration system:
+
+### Configuration Layers (Priority: Low → High)
+
+1. **Code Defaults** - Sensible defaults in Pydantic models
+2. **Configuration Files** - TOML files in `config/`
+3. **Environment Variables** - `NURA_*` prefixed variables
+4. **Runtime Overrides** - Programmatic configuration
+
+### Example Usage
+
+```python
+from nura.config import get_config
+
+# Get global configuration
+config = get_config()
+api_key = config.llm["default"].api_key
+
+# Platform-specific configuration
+config = get_config(platform="feishu")
+app_id = config.platforms.feishu.app_id
+
+# For testing (dependency injection)
+from nura.config import ConfigManager
+
+manager = ConfigManager()
+test_config = manager.load(overrides={
+    "context": {"max_tokens": 1000}
+})
+```
+
+### Environment Variables
+
+```bash
+# Core LLM
+NURA_LLM_API_KEY=sk-xxx
+NURA_LLM_MODEL=gpt-4
+NURA_LLM_BASE_URL=https://api.openai.com/v1
+
+# Context Management
+NURA_CONTEXT_MAX_TOKENS=128000
+NURA_CONTEXT_KEEP_TURNS=10
+
+# Platform (Feishu)
+FEISHU_APP_ID=cli_xxx
+FEISHU_APP_SECRET=secret_xxx
+
+# TTS (Volcengine)
+VOLCENGINE_TTS_TOKEN=token_xxx
+```
+
+## 🛠️ Development
 
 ### Running Tests
 
 ```bash
-# Run all tests
-make test
+# All tests
+uv run pytest tests/
 
-# Run unit tests only (fast)
-make test-unit
+# Unit tests only (fast)
+uv run pytest tests/unit/ -v -m unit
 
-# Run with coverage
-make test-cov
+# Integration tests
+uv run pytest tests/integration/ -v -m integration
+
+# With coverage
+uv run pytest tests/ --cov=nura --cov-report=html
 open htmlcov/index.html
-
-# Run in parallel
-make test-parallel
 ```
-
-Note: All commands use `uv` automatically. Use `uv run pytest` for direct pytest access.
-
-### Test Structure
-
-- `tests/unit/` - Fast, isolated unit tests (70%+ coverage target)
-- `tests/integration/` - Multi-module integration tests
-- `tests/e2e/` - End-to-end workflow tests
-- `tests/fixtures/` - Test data and fixtures
-- `tests/helpers/` - Test utilities (mock_llm, poll, temp_dir)
 
 ### Code Quality
 
 ```bash
-# Install dev dependencies
-make install-dev
-
 # Format code
-black nura/
+uv run black nura/
 
 # Lint
-ruff check nura/
+uv run ruff check nura/
 
-# Type check
-mypy nura/
+# Type check (core modules)
+uv run mypy nura/core/ nura/config/
 ```
 
-## Features
+### Optional Dependencies
 
-### Event-Driven Architecture
-- Dual-priority event queue (Main > Background)
-- Thread-safe operations
-- Debounce support for batch processing
-- Conversation-based routing
+```bash
+# For sandbox execution
+uv pip install -e ".[sandbox]"
 
-### Token-Optimized Context
-- Automatic compression at 50% threshold
-- Preserves recent N messages
-- Summarizes older messages
-- Transparent LLM integration
+# For AWS Bedrock
+uv pip install -e ".[bedrock]"
 
-### Platform Abstraction
-- MessagingService interface (text, file, audio)
-- TTSService interface
-- Easy to add new platforms (WeChat, Slack, etc.)
+# For web search
+uv pip install -e ".[websearch]"
 
-### Agent System
-- BaseAgent with state management
-- ReActAgent for reasoning
-- ToolCallAgent for tool execution
-- Manus for general tasks
-- EventDrivenAgent for async workflows
+# For Feishu integration
+uv pip install -e ".[feishu]"
 
-### Tool System
-- Merged OpenManus + Virtual-IP tools
-- BaseTool abstraction
-- ToolCollection for grouping
-- Dynamic tool discovery
-
-### Flow System
-- PlanningFlow for task decomposition
-- Multi-agent coordination
-- Sub-agent spawning
-
-### Skill System
-- YAML-based skill definitions
-- Dynamic discovery from multiple directories
-- Progressive disclosure
-- Requires validation (bins, env vars)
-
-## Platform Integrations
-
-### Feishu (Implemented)
-- WebSocket bot connection
-- Text, audio, file messaging
-- Emoji support
-- TTS via Volcengine
-
-### Coming Soon
-- WeChat integration
-- Slack integration
-- Discord integration
-
-## Architecture Diagrams
-
-### Event Flow
-```
-User Message → EventQueue (Main) → EventDrivenAgent → ToolCall → MessagingService → Platform
-                      ↓
-           Debounce + Batch → Context Compression → LLM (with Ark cache)
+# All features
+uv pip install -e ".[all]"
 ```
 
-### Context Compression
+## 📖 Usage Examples
+
+### Creating a Simple Agent
+
+```python
+from nura.agent.base import BaseAgent, AgentState
+from nura.config import get_config
+
+class MyAgent(BaseAgent):
+    async def step(self) -> None:
+        """Execute one reasoning step."""
+        async with self.state_context(AgentState.RUNNING):
+            # Your agent logic here
+            response = await self.llm_client.ask(
+                messages=self.memory,
+                temperature=0.7
+            )
+            self.update_memory("assistant", response.content)
+
+# Initialize and run
+config = get_config()
+agent = MyAgent(llm_config=config.llm["default"])
+await agent.run()
 ```
-Messages: [m1, m2, ..., m50, m51, ...]
-          ↓ (token count > 50% threshold)
-Summary: [Summary of m1-m45] + [m46, m47, ..., m51, ...]
-         ↓
-To LLM: [system(summary), m46, m47, ..., m51, new_message]
+
+### Creating a Custom Tool
+
+```python
+from nura.tool.base import BaseTool
+
+class WeatherTool(BaseTool):
+    name = "get_weather"
+    description = "Get current weather for a location"
+
+    async def execute(self, location: str) -> str:
+        """Fetch weather data."""
+        # Your implementation here
+        return f"Weather in {location}: Sunny, 72°F"
 ```
 
-## License
+### Event-Driven Integration
 
-MIT License
+```python
+from nura.event import EventQueue, Event, EventType
+from nura.agent.event_driven import EventDrivenAgent
 
-## Contributing
+# Create event queue
+queue = EventQueue()
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+# Put event
+queue.put(Event(
+    type=EventType.MAIN,
+    data={"text": "Hello, agent!"},
+    conversation_id="user_123"
+))
 
-### Contribution Guidelines
-- Add unit tests for new features
-- Maintain 70%+ code coverage
-- Follow existing code style
-- Update documentation
+# Agent processes events
+agent = EventDrivenAgent(event_queue=queue)
+await agent.run()
+```
 
-## Acknowledgments
+## 🧪 Test Coverage
 
-- **OpenManus** - Core agent and tool framework
-- **Virtual-IP** - Event-driven architecture inspiration
-- **Anthropic** - Claude API integration
+Current coverage: **60%+** (Unit + Integration tests)
 
-## Support
+```bash
+# Generate coverage report
+uv run pytest tests/ --cov=nura --cov-report=term-missing
 
-- GitHub Issues: https://github.com/yourusername/nura/issues
-- Documentation: https://nura.readthedocs.io/
+# View in browser
+uv run pytest tests/ --cov=nura --cov-report=html
+open htmlcov/index.html
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Make** your changes with clear commit messages
+4. **Add** tests for new features (maintain 60%+ coverage)
+5. **Ensure** all tests pass (`uv run pytest tests/`)
+6. **Push** to your branch (`git push origin feature/amazing-feature`)
+7. **Open** a Pull Request
+
+### Development Guidelines
+
+- Use `uv` for dependency management
+- Follow PEP 8 style guide
+- Add type hints to all public APIs
+- Write docstrings for public classes/methods
+- Keep functions focused (<50 lines)
+- Update documentation for new features
+
+## 📋 Roadmap
+
+- [ ] Discord integration
+- [ ] Telegram integration
+- [ ] WeChat integration
+- [ ] Slack integration
+- [ ] Streaming response support
+- [ ] Vector database integration
+- [ ] Advanced memory systems
+- [ ] Multi-agent orchestration UI
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **OpenManus** - Inspiration for agent and tool framework
+- **Anthropic** - Claude API integration patterns
+- **Volcengine** - Ark LLM caching strategies
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/baikai-li/nura/issues)
+
+## 🌐 Related Projects
+
+- [OpenManus](https://github.com/OpenBMB/OpenManus) - Open-source agent framework
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the Nura team**
+
+[English](README.md) | [简体中文](README.zh.md)
+
+</div>

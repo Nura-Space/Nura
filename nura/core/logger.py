@@ -3,29 +3,73 @@ from datetime import datetime
 
 from loguru import logger as _logger
 
-from nura.core.config import PROJECT_ROOT
-
 _print_level = "INFO"
 
+_context_log_file = None
 
-def define_log_level(print_level="INFO", logfile_level="DEBUG", name: str = None):
-    """Adjust the log level to above level"""
-    global _print_level
-    _print_level = print_level
-
-    current_date = datetime.now()
-    formatted_date = current_date.strftime("%Y%m%d%H%M%S")
-    log_name = (
-        f"{name}_{formatted_date}" if name else formatted_date
-    )  # name a log with prefix name
-
-    _logger.remove()
-    _logger.add(sys.stderr, level=print_level)
-    _logger.add(PROJECT_ROOT / f"logs/{log_name}.log", level=logfile_level)
-    return _logger
+_logger_initialized = False
 
 
-logger = define_log_level()
+def _ensure_logger_initialized():
+    """Lazy initialization of logger to avoid circular imports."""
+    global _logger_initialized
+    if not _logger_initialized:
+        from nura.core.config import PROJECT_ROOT
+
+        current_date = datetime.now()
+        formatted_date = current_date.strftime("%Y%m%d%H%M%S")
+
+        _logger.remove()
+        _logger.add(sys.stderr, level="INFO")
+        _logger.add(PROJECT_ROOT / f"logs/{formatted_date}.log", level="DEBUG")
+        _logger_initialized = True
+
+
+class LoggerProxy:
+    """Proxy class for lazy initialization of logger."""
+
+    def __getattr__(self, name):
+        _ensure_logger_initialized()
+        return getattr(_logger, name)
+
+    def __call__(self, *args, **kwargs):
+        _ensure_logger_initialized()
+        return _logger(*args, **kwargs)
+
+
+logger = LoggerProxy()
+
+
+def get_context_logger():
+    """Get a file handle for writing complete context logs.
+
+    This writes directly to a file without going through loguru,
+    avoiding duplicate output issues.
+    """
+    from nura.core.config import PROJECT_ROOT
+
+    global _context_log_file
+    if _context_log_file is None:
+        current_date = datetime.now()
+        formatted_date = current_date.strftime("%Y%m%d%H%M%S")
+        log_path = PROJECT_ROOT / f"logs/context_{formatted_date}.log"
+        _context_log_file = open(log_path, "w", encoding="utf-8")
+    return _context_log_file
+
+
+def close_context_logger():
+    """Close the context log file."""
+    global _context_log_file
+    if _context_log_file is not None:
+        _context_log_file.close()
+        _context_log_file = None
+
+
+def context_log(message: str):
+    """Write a message to the context log file."""
+    f = get_context_logger()
+    f.write(message + "\n")
+    f.flush()
 
 
 if __name__ == "__main__":

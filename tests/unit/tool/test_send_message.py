@@ -1,4 +1,5 @@
 """Unit tests for SendMessage tool."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -51,7 +52,7 @@ class TestSendMessage:
         mock_send = AsyncMock()
         mock_client.send = mock_send
 
-        with patch('nura.tool.send_message._get_client', return_value=mock_client):
+        with patch("nura.tool.send_message._get_client", return_value=mock_client):
             result = await tool.execute(content="Hello world")
 
             assert result.output is not None
@@ -68,8 +69,8 @@ class TestSendMessage:
         mock_send = AsyncMock()
         mock_client.send = mock_send
 
-        with patch('nura.tool.send_message._get_client', return_value=mock_client):
-            result = await tool.execute(content="Line 1\nLine 2\nLine 3")
+        with patch("nura.tool.send_message._get_client", return_value=mock_client):
+            await tool.execute(content="Line 1\nLine 2\nLine 3")
 
             # Should be called for each non-empty line
             assert mock_send.call_count >= 1
@@ -81,17 +82,14 @@ class TestSendMessage:
 
         mock_client = MagicMock()
         mock_client._enable_voice = False
-        mock_client.emoji_func = {
-            "happy": ["😊", "😄"],
-            "thanks": ["🙏", "谢"]
-        }
+        mock_client.emoji_func = {"happy": ["😊", "😄"], "thanks": ["🙏", "谢"]}
 
         mock_send = AsyncMock()
         mock_client.send = mock_send
 
-        with patch('nura.tool.send_message._get_client', return_value=mock_client):
-            with patch('random.random', return_value=0.3):  # Force emoji to be sent
-                result = await tool.execute(content="Thank you!", emotion="thanks")
+        with patch("nura.tool.send_message._get_client", return_value=mock_client):
+            with patch("random.random", return_value=0.3):  # Force emoji to be sent
+                await tool.execute(content="Thank you!", emotion="thanks")
 
                 # Note: with random=0.3, emoji should be sent (0.3 < 0.5)
 
@@ -106,8 +104,8 @@ class TestSendMessage:
         mock_send = AsyncMock()
         mock_client.send = mock_send
 
-        with patch('nura.tool.send_message._get_client', return_value=mock_client):
-            result = await tool.execute(content="[wave]")
+        with patch("nura.tool.send_message._get_client", return_value=mock_client):
+            await tool.execute(content="[wave]")
 
             # Should handle emoji-only segments
 
@@ -148,8 +146,8 @@ class TestSendMessageVoice:
         mock_send = AsyncMock()
         mock_client.send = mock_send
 
-        with patch('nura.tool.send_message._get_client', return_value=mock_client):
-            result = await tool.execute(content="Voice message")
+        with patch("nura.tool.send_message._get_client", return_value=mock_client):
+            await tool.execute(content="Voice message")
 
             # Should fall back to text when TTS not available
 
@@ -168,8 +166,10 @@ class TestSendMessageVoice:
         mock_send = AsyncMock()
         mock_client.send = mock_send
 
-        with patch('nura.tool.send_message._get_client', return_value=mock_client):
-            with patch('nura.tool.send_message.convert_to_opus', return_value=True):
-                with patch('nura.tool.send_message.get_audio_duration', return_value=1000):
+        with patch("nura.tool.send_message._get_client", return_value=mock_client):
+            with patch("nura.tool.send_message.convert_to_opus", return_value=True):
+                with patch(
+                    "nura.tool.send_message.get_audio_duration", return_value=1000
+                ):
                     # This will create temp files that don't exist, but that's ok for test
-                    result = await tool.execute(content="Voice message")
+                    await tool.execute(content="Voice message")

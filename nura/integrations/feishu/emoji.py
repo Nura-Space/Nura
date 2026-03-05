@@ -2,7 +2,7 @@
 
 import json
 import os
-from loguru import logger
+from nura.core.logger import logger
 
 
 def load_emoji_functions(emoji_path: str = None) -> dict:

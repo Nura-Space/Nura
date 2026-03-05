@@ -1,9 +1,19 @@
 """Global pytest fixtures and configuration."""
+
+import asyncio
 import os
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
+
+
+@pytest.fixture(scope="session")
+def event_loop_policy():
+    """Use default event loop policy for all tests."""
+    return asyncio.DefaultEventLoopPolicy()
+
 
 # === Environment Isolation ===
+
 
 @pytest.fixture(autouse=True)
 def isolate_environment(tmp_path, monkeypatch):
@@ -37,12 +47,21 @@ def isolate_environment(tmp_path, monkeypatch):
 
 # === LLM Fixtures ===
 
+
 @pytest.fixture
 def llm_config():
-    """Load real LLM configuration from config.toml."""
-    from nura.core.config import config
-    # Return the full config dict, not just the default settings
-    return config.llm
+    """Load real LLM configuration from default.toml."""
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        from nura.core.config import config
+
+        # config.llm returns a dict like {'default': LLMSettings(...), ...}
+        # Return the default LLMSettings object, or None if not available
+        if config.llm is None:
+            return None
+        return config.llm.get("default")
 
 
 @pytest.fixture
@@ -50,13 +69,19 @@ def real_llm(llm_config):
     """Create real LLM instance for integration tests.
 
     This fixture creates an LLM instance using the real configuration
-    from config.toml. Use this for integration tests that need actual API calls.
+    from default.toml. Use this for integration tests that need actual API calls.
     """
     from nura.llm import LLM
 
+    # Skip if config is not available
+    if llm_config is None:
+        pytest.skip("LLM config not available")
+
     # Clear instances to ensure fresh creation with test config
     LLM._instances.clear()
-    llm = LLM(config_name='default', llm_config=llm_config)
+
+    # llm_config fixture now returns LLMSettings object directly
+    llm = LLM(config_name="default", llm_config=llm_config)
     yield llm
     # Cleanup after test
     LLM._instances.clear()
@@ -70,7 +95,6 @@ def mock_llm():
     """
     from nura.llm import LLM
     from nura.llm.adapters import OpenAIMessageAdapter
-    from unittest.mock import MagicMock
 
     # Clear instances to ensure fresh creation
     LLM._instances.clear()
@@ -91,8 +115,15 @@ def mock_llm():
     llm.token_counter.count_message_tokens = MagicMock(return_value=100)
     # Set adapter for provider detection
     llm._adapter = OpenAIMessageAdapter()
+    # Set client and tokenizer for mock
+    llm.client = MagicMock()
+    llm.tokenizer = MagicMock()
+
+    # Ensure ask_tool is set for tests
+    llm.ask_tool = MagicMock()
 
     return llm
+
 
 def pytest_configure(config):
     """Configure pytest markers."""
@@ -100,6 +131,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: Integration tests")
     config.addinivalue_line("markers", "e2e: End-to-end tests")
     config.addinivalue_line("markers", "live: Live tests with real credentials")
+
 
 def pytest_collection_modifyitems(config, items):
     """Skip live tests unless explicitly enabled."""

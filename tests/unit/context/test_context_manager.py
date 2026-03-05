@@ -1,4 +1,5 @@
 """Unit tests for ContextManager."""
+
 import pytest
 from nura.context import ContextManager, ContextConfig
 from nura.core.schema import Message
@@ -27,7 +28,7 @@ class TestContextManager:
             max_tokens=100,  # Very small limit
             compress_threshold=0.5,  # 50 tokens
             keep_turns=1,  # Keep only 1 turn
-            compress_cooldown=0  # No cooldown for testing
+            compress_cooldown=0,  # No cooldown for testing
         )
         manager = ContextManager(config)
 
@@ -35,7 +36,9 @@ class TestContextManager:
         # Each message is about 80 chars, ~20 tokens each
         for i in range(20):
             if i % 2 == 0:
-                manager.add_message(Message.user_message("This is a longer message " * 20))
+                manager.add_message(
+                    Message.user_message("This is a longer message " * 20)
+                )
             else:
                 manager.add_message(Message.assistant_message("Response " * 20))
 

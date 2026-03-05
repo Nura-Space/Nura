@@ -1,4 +1,5 @@
 """Tests for openai adapter."""
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -11,7 +12,6 @@ class TestOpenAIMessageAdapter:
     @pytest.fixture
     def adapter(self):
         """Create an OpenAIMessageAdapter instance."""
-        from nura.llm.adapters.openai import OpenAIMessageAdapter
         return OpenAIMessageAdapter()
 
     @pytest.mark.unit
@@ -73,7 +73,12 @@ class TestOpenAIMessageAdapter:
     @pytest.mark.unit
     def test_format_tools_with_tools(self, adapter):
         """Test format_tools with tools."""
-        tools = [{"type": "function", "function": {"name": "test", "description": "A test tool"}}]
+        tools = [
+            {
+                "type": "function",
+                "function": {"name": "test", "description": "A test tool"},
+            }
+        ]
         result = adapter.format_tools(tools)
         assert result == tools
 

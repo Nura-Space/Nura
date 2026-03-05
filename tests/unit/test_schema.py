@@ -1,4 +1,5 @@
 """Unit tests for schema module."""
+
 import pytest
 from nura.core.schema import Message, Memory, AgentState
 
@@ -82,7 +83,7 @@ class TestMessage:
             content="Hello",
             name="test_name",
             tool_call_id="call_123",
-            base64_image="abc123"
+            base64_image="abc123",
         )
         d = msg.to_dict()
         assert d["role"] == "user"
@@ -96,7 +97,13 @@ class TestMessage:
         msg = Message(
             role="assistant",
             content="Using tool",
-            tool_calls=[{"id": "call_1", "type": "function", "function": {"name": "test", "arguments": "{}"}}]
+            tool_calls=[
+                {
+                    "id": "call_1",
+                    "type": "function",
+                    "function": {"name": "test", "arguments": "{}"},
+                }
+            ],
         )
         d = msg.to_dict()
         assert "tool_calls" in d

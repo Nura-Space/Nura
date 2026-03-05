@@ -1,7 +1,7 @@
 """Tests for skill queue module."""
+
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 from nura.core.skill_queue import (
     SkillQueue,
@@ -21,9 +21,7 @@ class TestSkillTask:
     def test_create_task(self):
         """Test creating a skill task."""
         task = SkillTask(
-            skill_name="test_skill",
-            user_input="test input",
-            session_id="session_123"
+            skill_name="test_skill", user_input="test input", session_id="session_123"
         )
 
         assert task.skill_name == "test_skill"

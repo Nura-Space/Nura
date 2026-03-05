@@ -4,7 +4,7 @@ import os
 import tempfile
 import uuid
 
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.services.sendable import AudioContent, FileContent
 from nura.services.utils import convert_to_opus, get_audio_duration
@@ -56,18 +56,6 @@ class SendFile(BaseTool):
 
     def __init__(self):
         super().__init__()
-        self._temp_files: list[str] = []
-
-    def cleanup(self):
-        """Clean up temporary files created during execution."""
-        for temp_file in self._temp_files:
-            try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                    logger.info(f"Cleaned up temp file: {temp_file}")
-            except Exception as e:
-                logger.warning(f"Failed to clean up temp file {temp_file}: {e}")
-        self._temp_files.clear()
 
     async def execute(self, file_path: str, file_type: str) -> ToolResult:
         """Send a file to the user.

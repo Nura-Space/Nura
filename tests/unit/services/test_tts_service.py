@@ -1,6 +1,7 @@
 """Tests for TTS service module."""
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 import base64
 import json
 
@@ -19,7 +20,7 @@ class TestVolcengineTTS:
                 "access_token": "test_token",
                 "cluster": "test_cluster",
                 "voice_type": "test_voice",
-                "api_url": "https://test-api.example.com/tts"
+                "api_url": "https://test-api.example.com/tts",
             }
         }
 
@@ -58,7 +59,9 @@ class TestVolcengineTTS:
 
         output_file = tmp_path / "output.mp3"
 
-        with patch("nura.services.tts_service.requests.post", return_value=mock_response):
+        with patch(
+            "nura.services.tts_service.requests.post", return_value=mock_response
+        ):
             result = await tts.generate_audio("Hello world", str(output_file))
 
         assert result is not None
@@ -73,7 +76,9 @@ class TestVolcengineTTS:
         mock_response = MagicMock()
         mock_response.json.return_value = {"error": "some error"}
 
-        with patch("nura.services.tts_service.requests.post", return_value=mock_response):
+        with patch(
+            "nura.services.tts_service.requests.post", return_value=mock_response
+        ):
             result = await tts.generate_audio("Hello world")
 
         assert result is None
@@ -83,9 +88,13 @@ class TestVolcengineTTS:
     async def test_generate_audio_network_error(self, tts_config):
         """Test audio generation with network error."""
         import requests
+
         tts = VolcengineTTS(tts_config)
 
-        with patch("nura.services.tts_service.requests.post", side_effect=requests.RequestException("Network error")):
+        with patch(
+            "nura.services.tts_service.requests.post",
+            side_effect=requests.RequestException("Network error"),
+        ):
             result = await tts.generate_audio("Hello world")
 
         assert result is None
@@ -99,7 +108,9 @@ class TestVolcengineTTS:
         mock_response = MagicMock()
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
 
-        with patch("nura.services.tts_service.requests.post", return_value=mock_response):
+        with patch(
+            "nura.services.tts_service.requests.post", return_value=mock_response
+        ):
             result = await tts.generate_audio("Hello world")
 
         assert result is None
@@ -116,7 +127,9 @@ class TestVolcengineTTS:
             "data": base64.b64encode(mock_audio_data).decode("utf-8")
         }
 
-        with patch("nura.services.tts_service.requests.post", return_value=mock_response):
+        with patch(
+            "nura.services.tts_service.requests.post", return_value=mock_response
+        ):
             result = await tts.generate_audio("Hello world")
 
         assert result == "output.mp3"
@@ -130,7 +143,9 @@ class TestVolcengineTTS:
         mock_response = MagicMock()
         mock_response.json.return_value = {}  # No data field
 
-        with patch("nura.services.tts_service.requests.post", return_value=mock_response):
+        with patch(
+            "nura.services.tts_service.requests.post", return_value=mock_response
+        ):
             result = await tts.generate_audio("Hello world")
 
         assert result is None
@@ -148,7 +163,9 @@ class TestVolcengineTTS:
         }
 
         # Try to write to an invalid path
-        with patch("nura.services.tts_service.requests.post", return_value=mock_response):
+        with patch(
+            "nura.services.tts_service.requests.post", return_value=mock_response
+        ):
             result = await tts.generate_audio("Hello world", "/invalid/path/output.mp3")
 
         assert result is None

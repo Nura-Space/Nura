@@ -60,10 +60,12 @@ def main():
             logger.info(f"status: {status}, progress: {percent/100:.2f}")
             if message:
                 logger.info(f"message: {message}")
-            
+
             # 第二步: percent为100时，检查输出目录
             if percent == 100:
-                app_support = os.path.expanduser("~/Library/Application Support/Replay/com.replay.Replay")
+                app_support = os.path.expanduser(
+                    "~/Library/Application Support/Replay/com.replay.Replay"
+                )
                 job_dir = os.path.join(app_support, "outputs", job_id)
 
                 if os.path.exists(job_dir):

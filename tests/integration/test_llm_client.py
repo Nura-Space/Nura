@@ -1,7 +1,7 @@
 """Integration tests for LLM client with real API."""
+
 import os
 import pytest
-import asyncio
 
 from nura.llm.client import LLM
 from nura.core.config import config
@@ -40,11 +40,7 @@ async def test_llm_ask_basic(llm_client):
     """Test basic ask request with real API."""
     messages = [{"role": "user", "content": "Say 'Hello' in one word."}]
 
-    response = await llm_client.ask(
-        messages=messages,
-        stream=False,
-        temperature=0.0
-    )
+    response = await llm_client.ask(messages=messages, stream=False, temperature=0.0)
 
     assert response is not None
     assert isinstance(response, str)
@@ -60,10 +56,7 @@ async def test_llm_ask_with_system_message(llm_client):
     messages = [{"role": "user", "content": "What is 1+1?"}]
 
     response = await llm_client.ask(
-        messages=messages,
-        system_msgs=system_msgs,
-        stream=False,
-        temperature=0.0
+        messages=messages, system_msgs=system_msgs, stream=False, temperature=0.0
     )
 
     assert response is not None
@@ -89,7 +82,7 @@ async def test_llm_count_message_tokens(llm_client):
     messages = [
         {"role": "system", "content": "You are helpful."},
         {"role": "user", "content": "Hello!"},
-        {"role": "assistant", "content": "Hi there!"}
+        {"role": "assistant", "content": "Hi there!"},
     ]
 
     count = llm_client.count_message_tokens(messages)
@@ -117,11 +110,7 @@ async def test_llm_streaming(llm_client):
     """Test streaming response."""
     messages = [{"role": "user", "content": "Count from 1 to 3."}]
 
-    response = await llm_client.ask(
-        messages=messages,
-        stream=True,
-        temperature=0.0
-    )
+    response = await llm_client.ask(messages=messages, stream=True, temperature=0.0)
 
     assert response is not None
     assert isinstance(response, str)
@@ -166,14 +155,10 @@ async def test_llm_longer_conversation(llm_client):
     messages = [
         {"role": "user", "content": "My name is TestUser."},
         {"role": "assistant", "content": "Hello TestUser! How can I help you?"},
-        {"role": "user", "content": "What's my name?"}
+        {"role": "user", "content": "What's my name?"},
     ]
 
-    response = await llm_client.ask(
-        messages=messages,
-        stream=False,
-        temperature=0.0
-    )
+    response = await llm_client.ask(messages=messages, stream=False, temperature=0.0)
 
     assert response is not None
     assert isinstance(response, str)

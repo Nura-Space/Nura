@@ -1,11 +1,10 @@
 """Message tool for sending messages to the user."""
 
-import os
 import re
 import tempfile
 import uuid
 
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.tool.base import BaseTool, ToolResult
 from nura.services.sendable import AudioContent, TextContent
@@ -73,18 +72,6 @@ class SendMessage(BaseTool):
 
     def __init__(self):
         super().__init__()
-        self._temp_files: list[str] = []
-
-    def cleanup(self):
-        """Clean up temporary files created during execution."""
-        for temp_file in self._temp_files:
-            try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                    logger.info(f"Cleaned up temp file: {temp_file}")
-            except Exception as e:
-                logger.warning(f"Failed to clean up temp file {temp_file}: {e}")
-        self._temp_files.clear()
 
     async def execute(self, content: str, emotion: str = None) -> ToolResult:
         """Send a message to the user.
@@ -134,7 +121,7 @@ class SendMessage(BaseTool):
                 logger.info(f"Adding emoji {emoji_text} for emotion: {emotion}")
 
         self.cleanup()
-        return self.success_response(f"消息已发送: {content}")
+        return self.success_response("消息已发送")
 
     async def _send_voice(self, text: str):
         """Send voice reply using TTS."""

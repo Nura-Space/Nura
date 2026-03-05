@@ -1,4 +1,5 @@
 """Integration tests for Event + Context system."""
+
 import pytest
 import asyncio
 from nura.event import EventQueue, Event, EventType
@@ -15,11 +16,7 @@ class TestEventContextIntegration:
         """Test that events trigger context compression correctly."""
         # Setup
         queue = EventQueue(debounce_seconds=0.1)
-        config = ContextConfig(
-            max_tokens=1000,
-            compress_threshold=0.5,
-            keep_turns=1
-        )
+        config = ContextConfig(max_tokens=1000, compress_threshold=0.5, keep_turns=1)
         context = ContextManager(config)
 
         # Simulate event-driven message processing
@@ -28,7 +25,7 @@ class TestEventContextIntegration:
                 id=f"evt-{i}",
                 type=EventType.MAIN,
                 data={"text": "Hello " * 50},  # Long message
-                conversation_id="conv-1"
+                conversation_id="conv-1",
             )
             await queue.put(event)
 
@@ -54,7 +51,7 @@ class TestEventContextIntegration:
                 id=f"evt-{i}",
                 type=EventType.MAIN,
                 data={"text": f"Message {i}"},
-                conversation_id="conv-1"
+                conversation_id="conv-1",
             )
             await queue.put(event)
             await asyncio.sleep(0.05)  # Faster than debounce
@@ -81,7 +78,7 @@ class TestEventContextIntegration:
             id="bg",
             type=EventType.BACKGROUND,
             data={"text": "Background task"},
-            conversation_id="conv-1"
+            conversation_id="conv-1",
         )
         await queue.put(bg_event)
 
@@ -90,7 +87,7 @@ class TestEventContextIntegration:
             id="main",
             type=EventType.MAIN,
             data={"text": "User message"},
-            conversation_id="conv-1"
+            conversation_id="conv-1",
         )
         await queue.put(main_event)
 

@@ -1,7 +1,7 @@
 """Tests for LLM adapters."""
+
 import pytest
 from unittest.mock import MagicMock
-from typing import Any, Dict
 
 from nura.llm.adapters.ark import ArkMessageAdapter
 from nura.llm.adapters.base import BaseMessageAdapter
@@ -30,9 +30,7 @@ class TestArkMessageAdapter:
     @pytest.mark.unit
     def test_format_for_provider_basic_message(self, adapter):
         """Test formatting basic message."""
-        messages = [
-            {"role": "user", "content": "Hello"}
-        ]
+        messages = [{"role": "user", "content": "Hello"}]
 
         result = adapter.format_for_provider(messages)
 
@@ -46,8 +44,8 @@ class TestArkMessageAdapter:
         message = MagicMock()
         message.dict = MagicMock(return_value={"role": "user", "content": "Hello"})
         # Remove to_dict attribute to test dict fallback
-        if hasattr(message, 'to_dict'):
-            delattr(message, 'to_dict')
+        if hasattr(message, "to_dict"):
+            delattr(message, "to_dict")
 
         result = adapter.format_for_provider([message])
 
@@ -59,7 +57,9 @@ class TestArkMessageAdapter:
     def test_format_for_provider_with_to_dict(self, adapter):
         """Test formatting message with to_dict() method."""
         message = MagicMock()
-        message.to_dict = MagicMock(return_value={"role": "system", "content": "You are helpful"})
+        message.to_dict = MagicMock(
+            return_value={"role": "system", "content": "You are helpful"}
+        )
         message.dict = None
 
         result = adapter.format_for_provider([message])
@@ -79,10 +79,10 @@ class TestArkMessageAdapter:
                         "id": "call_123",
                         "function": {
                             "name": "search",
-                            "arguments": '{"query": "test"}'
-                        }
+                            "arguments": '{"query": "test"}',
+                        },
                     }
-                ]
+                ],
             }
         ]
 
@@ -103,7 +103,7 @@ class TestArkMessageAdapter:
             {
                 "role": "tool",
                 "content": "Search results here",
-                "tool_call_id": "call_123"
+                "tool_call_id": "call_123",
             }
         ]
 
@@ -124,8 +124,8 @@ class TestArkMessageAdapter:
                 "function": {
                     "name": "search",
                     "description": "Search the web",
-                    "parameters": {"type": "object", "properties": {}}
-                }
+                    "parameters": {"type": "object", "properties": {}},
+                },
             }
         ]
 
@@ -141,7 +141,7 @@ class TestArkMessageAdapter:
             {"role": "system", "content": "You are helpful"},
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
+            {"role": "user", "content": "How are you?"},
         ]
 
         result = adapter.format_for_provider(messages)
@@ -164,8 +164,8 @@ class TestArkMessageAdapter:
                 "function": {
                     "name": "search",
                     "description": "Search the web",
-                    "parameters": {"type": "object", "properties": {}}
-                }
+                    "parameters": {"type": "object", "properties": {}},
+                },
             }
         ]
 

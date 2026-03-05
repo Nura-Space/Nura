@@ -1,5 +1,5 @@
 import asyncio
-from loguru import logger
+from nura.core.logger import logger
 
 
 async def convert_to_opus(input_path: str, output_path: str = "output.opus") -> str:

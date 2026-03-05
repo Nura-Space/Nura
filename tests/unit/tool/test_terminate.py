@@ -1,4 +1,5 @@
 """Unit tests for Terminate tool."""
+
 import pytest
 
 from nura.tool.terminate import Terminate

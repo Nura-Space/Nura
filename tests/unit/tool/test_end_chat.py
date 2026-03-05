@@ -1,4 +1,5 @@
 """Unit tests for EndChat tool."""
+
 import pytest
 
 from nura.tool.end_chat import EndChat

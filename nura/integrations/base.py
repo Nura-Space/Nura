@@ -11,11 +11,12 @@ import threading
 from abc import ABC, abstractmethod
 from typing import Optional, Any
 
-from loguru import logger
+from nura.core.logger import logger, context_log
 
 from nura.event import EventQueue
 from nura.agent.event_driven import EventDrivenAgent, ContextConfig
 from nura.services.base import ClientFactory
+from nura.utils import load_json_config
 
 
 class BaseBot(ABC):
@@ -96,14 +97,7 @@ class BaseBot(ABC):
         Returns:
             Configuration dictionary
         """
-        import json
-
-        try:
-            with open(config_path, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load config from {config_path}: {e}")
-            return {}
+        return load_json_config(config_path)
 
     async def setup_messaging_client(self, config: dict) -> None:
         """Setup messaging client by registering platform client to ClientFactory.
@@ -192,8 +186,11 @@ class BaseBot(ABC):
             if system_prompt:
                 system_prompt += "\n\n"
             system_prompt += f"## Available Skills\n{skills_summary}"
-            logger.info(f"Loaded {len(skills_manager.list_skills())} skills")
+            logger.info(
+                f"Loaded {len(skills_manager.list_skills(filter_unavailable=False))} skills"
+            )
 
+        context_log(system_prompt)
         return system_prompt
 
     async def initialize_event_queue(self, config: dict) -> EventQueue:

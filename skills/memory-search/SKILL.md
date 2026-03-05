@@ -1,6 +1,6 @@
 ---
 name: memory-search
-description: "记忆检索技能 - 在记忆目录中搜索和检索过去的对话或信息。支持链式检索，通过多轮搜索逐步定位目标记忆。"
+description: "记忆检索技能 - 灵活搜索记忆。支持全文搜索、结构化过滤、统计聚合、字段发现等多种查询方式。"
 blocking: true
 requires:
   env:
@@ -11,134 +11,150 @@ requires:
 
 ## Instructions
 
-在记忆目录中搜索和检索过去的对话或信息。这个技能支持链式检索，通过多轮搜索逐步定位目标记忆。
+灵活搜索和检索记忆目录中的信息。根据查询需求选择最合适的搜索策略。
 
-### 环境要求
+## 快速参考
 
-- **MEMORY_DIR**: 记忆目录路径（从配置中读取）
+| 想做什么 | 命令 |
+|----------|------|
+| 了解记忆全貌 | `query.py stats` |
+| 发现可用字段 | `query.py fields` |
+| 关键词搜索 | `query.py search "关键词"` |
+| 正则搜索 | `query.py search -r "模式"` |
+| 限定字段搜索 | `query.py search "关键词" --fields summary,description` |
+| 条件过滤 | `query.py filter field=value` |
+| 多条件过滤 | `query.py filter type=战斗 stage=凡人` |
+| 嵌套字段过滤 | `query.py filter "characters.name=韩立"` |
+| 正则过滤 | `query.py filter "type~战斗\|修炼"` |
+| 不等于过滤 | `query.py filter "type!=日常生活"` |
+| 分组统计 | `query.py stats --by type,stage` |
+| 列出文件 | `query.py list --limit N` |
+| 读取详情 | `read.py event_XXXXX.json` |
+| 批量读取 | `read.py file1.json file2.json` |
+| 选择字段读取 | `read.py event_XXXXX.json --fields summary,type` |
 
-如果未设置 MEMORY_DIR 环境变量，将使用配置中的 memory.memory_dir。
+**通用参数** (search/filter/list 共享): `--limit N`, `--offset N`, `--sort FIELD` (倒序用 `--sort="-field"`), `--format detail|compact|json`
 
-### 安全说明
+## 搜索策略
 
-本技能使用安全的专用脚本执行操作，所有脚本都包含以下安全措施：
-- 只允许读取 .json 文件
+根据查询需求，选择以下策略之一或组合使用：
+
+### 策略 A: 探索式搜索（不确定目标时）
+
+当不了解记忆内容或结构时，先探索再搜索：
+
+```bash
+# 1. 了解记忆总量和分布
+python3 ${SKILL_DIR}/scripts/query.py stats
+
+# 2. 了解有哪些可搜索字段
+python3 ${SKILL_DIR}/scripts/query.py fields
+
+# 3. 根据发现的信息，用 search 或 filter 缩窄范围
+python3 ${SKILL_DIR}/scripts/query.py search "感兴趣的内容"
+```
+
+### 策略 B: 关键词搜索（知道要找什么时）
+
+直接用关键词或正则搜索，逐步缩窄：
+
+```bash
+# 全文搜索（搜索所有字段）
+python3 ${SKILL_DIR}/scripts/query.py search "韩立"
+
+# 正则搜索（支持 .* | 等所有正则语法）
+python3 ${SKILL_DIR}/scripts/query.py search -r "韩立|韩老魔"
+python3 ${SKILL_DIR}/scripts/query.py search -r "炼气.*筑基"
+
+# 限定搜索字段
+python3 ${SKILL_DIR}/scripts/query.py search "战斗" --fields summary,description,actions
+
+# 读取感兴趣的文件
+python3 ${SKILL_DIR}/scripts/read.py event_00042.json
+```
+
+### 策略 C: 结构化过滤（按条件筛选时）
+
+用精确条件过滤，适合已知字段值的场景：
+
+```bash
+# 精确匹配（字符串包含）
+python3 ${SKILL_DIR}/scripts/query.py filter type=战斗
+
+# 多条件 AND
+python3 ${SKILL_DIR}/scripts/query.py filter type=战斗 stage=凡人
+
+# 正则匹配
+python3 ${SKILL_DIR}/scripts/query.py filter "type~战斗|修炼"
+
+# 嵌套字段（dot notation）
+python3 ${SKILL_DIR}/scripts/query.py filter "characters.name=韩立"
+
+# 不等于
+python3 ${SKILL_DIR}/scripts/query.py filter "type!=日常生活"
+```
+
+### 策略 D: 统计分析（需要全局视角时）
+
+用统计了解全局分布，再针对性搜索：
+
+```bash
+# 默认按 type 统计
+python3 ${SKILL_DIR}/scripts/query.py stats
+
+# 按指定字段统计
+python3 ${SKILL_DIR}/scripts/query.py stats --by type
+python3 ${SKILL_DIR}/scripts/query.py stats --by stage
+
+# 交叉统计
+python3 ${SKILL_DIR}/scripts/query.py stats --by type,stage
+
+# 针对感兴趣的分类深入
+python3 ${SKILL_DIR}/scripts/query.py filter type=战斗 --sort="-file" --limit 10
+```
+
+## 安全说明
+
+- 只读取 `event_*.json` 格式的文件
 - 防止目录遍历攻击
-- 限制搜索结果数量防止 DoS
-- 输入验证和过滤
-
-### 搜索策略
-
-由于记忆可能分散在多个文件中，建议采用以下链式检索策略：
-
-#### 步骤 1: 了解记忆目录结构
-
-首先列出记忆目录，了解记忆的数量和范围：
-
-```bash
-python3 ${SKILL_DIR}/scripts/list.py --limit 20
-```
-
-#### 步骤 2: 初步搜索
-
-根据用户的需求进行初步搜索：
-
-```bash
-# 简单关键词搜索
-python3 ${SKILL_DIR}/scripts/search.py --keyword "关键词"
-
-# 限制结果数量
-python3 ${SKILL_DIR}/scripts/search.py --keyword "关键词" --limit 10
-
-# 正则表达式搜索（更强大，支持通配符、交替等）
-python3 ${SKILL_DIR}/scripts/search.py --pattern "韩立|韩老魔"
-python3 ${SKILL_DIR}/scripts/search.py --pattern "炼气.*筑基" --limit 10
-
-# 在特定字段中搜索
-python3 ${SKILL_DIR}/scripts/search.py --keyword "战斗" --field description --field actions
-
-# 使用正则搜索特定字段
-python3 ${SKILL_DIR}/scripts/search.py --pattern "炼气|筑基" --field stage
-
-# 区分大小写的正则搜索
-python3 ${SKILL_DIR}/scripts/search.py --pattern "韩立" --case-sensitive
-```
-
-#### 步骤 3: 评估并优化搜索
-
-根据初步搜索结果的文件名，读取具体文件查看详情：
-
-```bash
-# 读取指定文件
-python3 ${SKILL_DIR}/scripts/read.py event_00001.json
-
-# 以 JSON 格式输出
-python3 ${SKILL_DIR}/scripts/read.py event_00001.json --json
-```
-
-#### 步骤 4: 筛选结果
-
-可以使用类型或阶段筛选：
-
-```bash
-# 按类型筛选
-python3 ${SKILL_DIR}/scripts/list.py --type 日常生活
-
-# 按阶段筛选
-python3 ${SKILL_DIR}/scripts/list.py --stage 凡人
-
-# 组合筛选
-python3 ${SKILL_DIR}/scripts/list.py --type 战斗 --limit 20
-```
-
-### 链式检索流程
-
-1. 首先执行初步搜索（使用 search.py）
-2. 评估搜索结果，如果不够精确则进行第二轮搜索
-3. 读取感兴趣的文件（使用 read.py）
-4. 重复直到找到目标信息
-5. 返回结构化的检索结果
-
-### 最终输出
-
-在调用 terminate 之前，输出最终总结：
-
-```bash
-echo "=== 记忆检索结果 ==="
-python3 ${SKILL_DIR}/scripts/read.py event_00001.json
-echo "==================="
-```
+- 结果数量上限 200 条
+- 正则编译错误保护
 
 ## Examples
 
 ```bash
-# 步骤 1: 查看记忆列表
-python3 ${SKILL_DIR}/scripts/list.py --limit 20
+# 探索记忆
+python3 ${SKILL_DIR}/scripts/query.py stats
+python3 ${SKILL_DIR}/scripts/query.py fields --sample 10
 
-# 步骤 2: 初步搜索 - 关键词
-python3 ${SKILL_DIR}/scripts/search.py --keyword "韩立"
+# 搜索
+python3 ${SKILL_DIR}/scripts/query.py search "韩立" --limit 10
+python3 ${SKILL_DIR}/scripts/query.py search -r "韩立|韩老魔" --format compact
+python3 ${SKILL_DIR}/scripts/query.py search "修炼" --fields summary --sort type
 
-# 步骤 2: 初步搜索 - 正则表达式（更强大）
-python3 ${SKILL_DIR}/scripts/search.py --pattern "韩立|韩老魔"
-python3 ${SKILL_DIR}/scripts/search.py --pattern "炼气.*筑基"
+# 过滤
+python3 ${SKILL_DIR}/scripts/query.py filter type=战斗 stage=凡人
+python3 ${SKILL_DIR}/scripts/query.py filter "characters.name=韩立" --format json
 
-# 步骤 3: 读取具体文件
+# 统计
+python3 ${SKILL_DIR}/scripts/query.py stats --by type,stage
+
+# 列出
+python3 ${SKILL_DIR}/scripts/query.py list --sort="-file" --limit 10 --offset 20
+
+# 读取详情
 python3 ${SKILL_DIR}/scripts/read.py event_00001.json
-
-# 步骤 4: 读取多个文件
-python3 ${SKILL_DIR}/scripts/read.py event_00002.json
-
-# 最终输出
-echo "=== 记忆检索结果 ==="
-python3 ${SKILL_DIR}/scripts/read.py event_00001.json
-echo "==================="
+python3 ${SKILL_DIR}/scripts/read.py event_00001.json event_00002.json --fields summary,type
+python3 ${SKILL_DIR}/scripts/read.py event_00001.json --json
 ```
 
 ## 可用脚本
 
-| 脚本 | 用途 | 示例 |
-|------|------|------|
-| `list.py` | 列出记忆文件 | `python3 list.py --limit 20` |
-| `search.py` | 关键词搜索 | `python3 search.py --keyword "韩立"` |
-| `search.py` | 正则搜索 | `python3 search.py --pattern "韩立\|韩老魔"` |
-| `read.py` | 读取指定文件 | `python3 read.py event_00001.json` |
+| 脚本 | 用途 | 核心参数 |
+|------|------|----------|
+| `query.py search` | 全文搜索 | `query`, `-r`, `--fields`, `--context` |
+| `query.py filter` | 结构化过滤 | `field=value`, `field~regex`, `field!=value` |
+| `query.py stats` | 聚合统计 | `--by field1,field2` |
+| `query.py list` | 列出文件 | `--no-summary` |
+| `query.py fields` | 发现字段 | `--sample N` |
+| `read.py` | 读取文件详情 | `--fields`, `--json`, 支持批量 |

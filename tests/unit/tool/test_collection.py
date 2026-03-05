@@ -1,4 +1,5 @@
 """Tests for nura/tool/collection.py"""
+
 import pytest
 from typing import Any, Optional
 
@@ -116,7 +117,9 @@ class TestToolCollection:
         tool = MockTool()
         collection = ToolCollection(tool)
 
-        result = await collection.execute(name="mock_tool", tool_input={"arg1": "value1"})
+        result = await collection.execute(
+            name="mock_tool", tool_input={"arg1": "value1"}
+        )
 
         assert isinstance(result, ToolResult)
         assert result.output is not None

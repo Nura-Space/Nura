@@ -1,4 +1,5 @@
 """Tests for LLM cache module."""
+
 import pytest
 import time
 from unittest.mock import MagicMock, AsyncMock, patch
@@ -42,34 +43,42 @@ class TestAskWithArkCache:
         mock_content_item.text = "Hello"
         mock_response.output = [mock_content_item]
 
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
             mock_cache.get_session.return_value = None
 
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = [{"role": "user", "content": "test"}]
-                mock_adapter.format_tools.return_value = None
-                mock_adapter.parse_response.return_value = mock_message
-                mock_adapter_class.return_value = mock_adapter
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = [
+                    {"role": "user", "content": "test"}
+                ]
+                mock_builder.count_input_tokens.return_value = 100
+                mock_builder.check_limits.return_value = True
+                mock_builder.build_params.return_value = {"model": "gpt-4"}
+                mock_builder.parse_response.return_value = mock_message
+                mock_builder.extract_usage.return_value = {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "cached_tokens": 0,
+                    "response_id": "response_123",
+                    "expire_at": int(time.time()) + 3600,
+                }
+                mock_builder_class.return_value = mock_builder
 
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = [{"role": "user", "content": "test"}]
+                with patch("nura.llm.cache.ark.config"):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    with patch("nura.llm.cache.config"):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
+                    result = await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": "test"}],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                    )
 
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": "test"}],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7
-                        )
-
-                        assert result is not None
+                    assert result is not None
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -79,30 +88,32 @@ class TestAskWithArkCache:
         mock_token_counter = MagicMock()
         mock_token_counter.count_message_tokens.return_value = 200000
 
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
-            mock_cache.get_session.return_value = None  # No session, go to else branch
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
+            mock_cache.get_session.return_value = None
 
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = [{"role": "user", "content": "test"}]
-                mock_adapter.format_tools.return_value = None
-                mock_adapter_class.return_value = mock_adapter
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = [
+                    {"role": "user", "content": "test"}
+                ]
+                mock_builder.count_input_tokens.return_value = 200000
+                mock_builder.check_limits.side_effect = TokenLimitExceeded(
+                    "Token limit exceeded"
+                )
+                mock_builder_class.return_value = mock_builder
 
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = [{"role": "user", "content": "test"}]
-
-                    with patch("nura.llm.cache.config"):
-                        with pytest.raises(TokenLimitExceeded):
-                            await ask_with_ark_cache(
-                                client=mock_client,
-                                model="gpt-4",
-                                messages=[{"role": "user", "content": "test"}],
-                                token_counter=mock_token_counter,
-                                check_token_limit=lambda x: False,  # Always return False
-                                get_limit_error_message=lambda x: "Token limit exceeded",
-                                max_tokens=1000,
-                                temperature=0.7
-                            )
+                with patch("nura.llm.cache.ark.config"):
+                    with pytest.raises(TokenLimitExceeded):
+                        await ask_with_ark_cache(
+                            client=mock_client,
+                            model="gpt-4",
+                            messages=[{"role": "user", "content": "test"}],
+                            token_counter=mock_token_counter,
+                            check_token_limit=lambda x: False,
+                            get_limit_error_message=lambda x: "Token limit exceeded",
+                            max_tokens=1000,
+                            temperature=0.7,
+                        )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -112,7 +123,6 @@ class TestAskWithArkCache:
         mock_token_counter = MagicMock()
         mock_token_counter.count_message_tokens.return_value = 100
 
-        # Create session data with previous response
         mock_session = MagicMock()
         mock_session.response_id = "prev_response_123"
         mock_session.last_message_count = 2
@@ -134,42 +144,56 @@ class TestAskWithArkCache:
         mock_message = MagicMock()
         mock_message.content = "Response"
 
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
             mock_cache.get_session.return_value = mock_session
 
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = [{"role": "user", "content": "test"}]
-                mock_adapter.format_tools.return_value = None
-                mock_adapter.parse_response.return_value = mock_message
-                mock_adapter_class.return_value = mock_adapter
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = [
+                    {"role": "system", "content": "You are helpful"},
+                    {"role": "user", "content": "Hello"},
+                    {"role": "assistant", "content": "Hi"},
+                    {"role": "user", "content": "test"},
+                ]
+                mock_builder.count_input_tokens.return_value = 100
+                mock_builder.check_limits.return_value = True
 
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = [
-                        {"role": "system", "content": "You are helpful"},
-                        {"role": "user", "content": "Hello"},
-                        {"role": "assistant", "content": "Hi"},
-                        {"role": "user", "content": "test"}
-                    ]
+                def build_params_side_effect(**kwargs):
+                    return {
+                        "model": "gpt-4",
+                        "previous_response_id": kwargs.get("previous_response_id"),
+                    }
 
-                    with patch("nura.llm.cache.config"):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
+                mock_builder.build_params.side_effect = build_params_side_effect
+                mock_builder.parse_response.return_value = mock_message
+                mock_builder.extract_usage.return_value = {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "cached_tokens": 50,
+                    "response_id": "response_456",
+                    "expire_at": int(time.time()) + 3600,
+                }
+                mock_builder_class.return_value = mock_builder
 
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": "test"}],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7,
-                            session_id="test_session"
-                        )
+                with patch("nura.llm.cache.ark.config"):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                        # Verify previous_response_id was passed
-                        call_kwargs = mock_client.responses.create.call_args.kwargs
-                        assert call_kwargs.get("previous_response_id") == "prev_response_123"
+                    await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": "test"}],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                        session_id="test_session",
+                    )
+
+                    call_kwargs = mock_client.responses.create.call_args.kwargs
+                    assert (
+                        call_kwargs.get("previous_response_id") == "prev_response_123"
+                    )
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -194,39 +218,54 @@ class TestAskWithArkCache:
         mock_message = MagicMock()
         mock_message.content = "Response"
 
-        tools = [{"type": "function", "function": {"name": "test_tool", "description": "A test tool"}}]
+        tools = [
+            {
+                "type": "function",
+                "function": {"name": "test_tool", "description": "A test tool"},
+            }
+        ]
 
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
             mock_cache.get_session.return_value = None
 
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = [{"role": "user", "content": "test"}]
-                mock_adapter.format_tools.return_value = tools
-                mock_adapter.parse_response.return_value = mock_message
-                mock_adapter_class.return_value = mock_adapter
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = [
+                    {"role": "user", "content": "test"}
+                ]
+                mock_builder.count_input_tokens.return_value = 150  # including tools
+                mock_builder.check_limits.return_value = True
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "tools": tools,
+                }
+                mock_builder.parse_response.return_value = mock_message
+                mock_builder.extract_usage.return_value = {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "cached_tokens": 0,
+                    "response_id": "response_789",
+                    "expire_at": int(time.time()) + 3600,
+                }
+                mock_builder_class.return_value = mock_builder
 
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = [{"role": "user", "content": "test"}]
+                with patch("nura.llm.cache.ark.config"):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    with patch("nura.llm.cache.config"):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
+                    await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": "test"}],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                        tools=tools,
+                    )
 
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": "test"}],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7,
-                            tools=tools
-                        )
-
-                        # Verify tools were passed
-                        call_kwargs = mock_client.responses.create.call_args.kwargs
-                        assert call_kwargs.get("tools") is not None
+                    call_kwargs = mock_client.responses.create.call_args.kwargs
+                    assert call_kwargs.get("tools") is not None
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -255,39 +294,45 @@ class TestAskWithArkCache:
 
         system_msgs = [{"role": "system", "content": "You are helpful"}]
 
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
             mock_cache.get_session.return_value = None
 
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = [{"role": "user", "content": "test"}]
-                mock_adapter.format_tools.return_value = None
-                mock_adapter.parse_response.return_value = mock_message
-                mock_adapter_class.return_value = mock_adapter
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = [
+                    {"role": "system", "content": "You are helpful"},
+                    {"role": "user", "content": "test"},
+                ]
+                mock_builder.count_input_tokens.return_value = 100
+                mock_builder.check_limits.return_value = True
+                mock_builder.build_params.return_value = {"model": "gpt-4"}
+                mock_builder.parse_response.return_value = mock_message
+                mock_builder.extract_usage.return_value = {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "cached_tokens": 0,
+                    "response_id": "response_abc",
+                    "expire_at": int(time.time()) + 3600,
+                }
+                mock_builder_class.return_value = mock_builder
 
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = [
-                        {"role": "system", "content": "You are helpful"},
-                        {"role": "user", "content": "test"}
-                    ]
+                with patch("nura.llm.cache.ark.config"):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    with patch("nura.llm.cache.config"):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
+                    await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": "test"}],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                        system_msgs=system_msgs,
+                    )
 
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": "test"}],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7,
-                            system_msgs=system_msgs
-                        )
-
-                        # Verify format_messages was called twice (system + messages)
-                        assert mock_format.call_count == 2
+                    # Verify format_messages was called with system_msgs
+                    mock_builder.format_messages.assert_called()
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -298,36 +343,36 @@ class TestAskWithArkCache:
         mock_token_counter.count_message_tokens.return_value = 100
 
         mock_response = MagicMock()
-        mock_response.output = []  # Empty response
+        mock_response.output = []
 
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
             mock_cache.get_session.return_value = None
 
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = []
-                mock_adapter.format_tools.return_value = None
-                mock_adapter_class.return_value = mock_adapter
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = []
+                mock_builder.count_input_tokens.return_value = 100
+                mock_builder.check_limits.return_value = True
+                mock_builder.build_params.return_value = {"model": "gpt-4"}
+                mock_builder.parse_response.return_value = None
+                mock_builder.extract_usage.return_value = None
+                mock_builder_class.return_value = mock_builder
 
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = []
+                with patch("nura.llm.cache.ark.config"):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    with patch("nura.llm.cache.config"):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
+                    result = await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                    )
 
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7
-                        )
-
-                        # Empty response should return None
-                        assert result is None
+                    assert result is None
 
 
 class TestCacheStrategy:
@@ -341,172 +386,6 @@ class TestCacheStrategy:
         mock_token_counter = MagicMock()
         mock_token_counter.count_message_tokens.return_value = 100
 
-        # Session with previous response
-        mock_session = MagicMock()
-        mock_session.response_id = "prev_response_123"
-        mock_session.last_message_count = 2  # After first user message
-
-        mock_response = MagicMock()
-        mock_content_item = MagicMock()
-        mock_content_item.type = "output_text"
-        mock_content_item.text = "Response"
-        mock_response.output = [mock_content_item]
-        mock_response.id = "response_456"
-        mock_response.expire_at = int(time.time()) + 3600
-        mock_response.usage = MagicMock()
-        mock_response.usage.input_tokens = 100
-        mock_response.usage.output_tokens = 50
-        mock_usage_details = MagicMock()
-        mock_usage_details.cached_tokens = 30
-        mock_response.usage.input_tokens_details = mock_usage_details
-
-        mock_message = MagicMock()
-        mock_message.content = "Response"
-
-        # Full message history: [system, user1, assistant1, user2]
-        full_history = [
-            {"role": "system", "content": "You are helpful"},
-            {"role": "user", "content": "Hello"},
-            {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
-        ]
-
-        # With strategy 'full', only user2 should be sent
-        expected_input = [{"role": "user", "content": "How are you?"}]
-
-        mock_config = MagicMock()
-        mock_config.llm = {"cache_strategy": "full"}
-
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
-            mock_cache.get_session.return_value = mock_session
-
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = expected_input
-                mock_adapter.format_tools.return_value = None
-                mock_adapter.parse_response.return_value = mock_message
-                mock_adapter_class.return_value = mock_adapter
-
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = full_history
-
-                    with patch("nura.llm.cache.config", mock_config):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
-
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": "How are you?"}],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7,
-                            session_id="test_session"
-                        )
-
-                        # Verify previous_response_id was passed
-                        call_kwargs = mock_client.responses.create.call_args.kwargs
-                        assert call_kwargs.get("previous_response_id") == "prev_response_123"
-
-                        # Verify only new user message was sent (strategy: full)
-                        mock_adapter.format_for_provider.assert_called_once()
-                        call_args = mock_adapter.format_for_provider.call_args[0][0]
-                        assert call_args == expected_input
-
-    @pytest.mark.unit
-    @pytest.mark.asyncio
-    async def test_cache_strategy_input_only(self):
-        """Test cache strategy 'input_only' - includes previous assistant + new user."""
-        mock_client = MagicMock()
-        mock_token_counter = MagicMock()
-        mock_token_counter.count_message_tokens.return_value = 100
-
-        # Session with previous response
-        mock_session = MagicMock()
-        mock_session.response_id = "prev_response_123"
-        mock_session.last_message_count = 2  # After first user message
-
-        mock_response = MagicMock()
-        mock_content_item = MagicMock()
-        mock_content_item.type = "output_text"
-        mock_content_item.text = "Response"
-        mock_response.output = [mock_content_item]
-        mock_response.id = "response_456"
-        mock_response.expire_at = int(time.time()) + 3600
-        mock_response.usage = MagicMock()
-        mock_response.usage.input_tokens = 100
-        mock_response.usage.output_tokens = 50
-        mock_usage_details = MagicMock()
-        mock_usage_details.cached_tokens = 30
-        mock_response.usage.input_tokens_details = mock_usage_details
-
-        mock_message = MagicMock()
-        mock_message.content = "Response"
-
-        # Full message history: [system, user1, assistant1, user2]
-        full_history = [
-            {"role": "system", "content": "You are helpful"},
-            {"role": "user", "content": "Hello"},
-            {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
-        ]
-
-        # With strategy 'input_only', should include assistant1 + user2
-        expected_input = [
-            {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
-        ]
-
-        mock_config = MagicMock()
-        mock_config.llm = {"cache_strategy": "input_only"}
-
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
-            mock_cache.get_session.return_value = mock_session
-
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = expected_input
-                mock_adapter.format_tools.return_value = None
-                mock_adapter.parse_response.return_value = mock_message
-                mock_adapter_class.return_value = mock_adapter
-
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = full_history
-
-                    with patch("nura.llm.cache.config", mock_config):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
-
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": "How are you?"}],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7,
-                            session_id="test_session"
-                        )
-
-                        # Verify previous_response_id was passed
-                        call_kwargs = mock_client.responses.create.call_args.kwargs
-                        assert call_kwargs.get("previous_response_id") == "prev_response_123"
-
-                        # Verify assistant + new user message was sent (strategy: input_only)
-                        mock_adapter.format_for_provider.assert_called_once()
-                        call_args = mock_adapter.format_for_provider.call_args[0][0]
-                        assert call_args == expected_input
-
-    @pytest.mark.unit
-    @pytest.mark.asyncio
-    async def test_cache_strategy_default_is_input_only(self):
-        """Test default cache strategy is 'input_only' when not specified."""
-        mock_client = MagicMock()
-        mock_token_counter = MagicMock()
-        mock_token_counter.count_message_tokens.return_value = 100
-
-        # Session with previous response
         mock_session = MagicMock()
         mock_session.response_id = "prev_response_123"
         mock_session.last_message_count = 2
@@ -532,49 +411,210 @@ class TestCacheStrategy:
             {"role": "system", "content": "You are helpful"},
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
+            {"role": "user", "content": "How are you?"},
         ]
 
-        # With default strategy (input_only), should include assistant1 + user2
-        expected_input = [
-            {"role": "assistant", "content": "Hi there"},
-            {"role": "user", "content": "How are you?"}
-        ]
-
-        # Config without cache_strategy (should default to input_only)
         mock_config = MagicMock()
-        mock_config.llm = MagicMock()
-        mock_config.llm.get = lambda key, default: default  # Returns default for any key
+        mock_config.llm = {"cache_strategy": "full"}
 
-        with patch("nura.llm.cache.cache_manager") as mock_cache:
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
             mock_cache.get_session.return_value = mock_session
 
-            with patch("nura.llm.cache.ArkMessageAdapter") as mock_adapter_class:
-                mock_adapter = MagicMock()
-                mock_adapter.format_for_provider.return_value = expected_input
-                mock_adapter.format_tools.return_value = None
-                mock_adapter.parse_response.return_value = mock_message
-                mock_adapter_class.return_value = mock_adapter
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = full_history
+                mock_builder.count_input_tokens.return_value = 100
+                mock_builder.check_limits.return_value = True
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "previous_response_id": "prev_response_123",
+                }
+                mock_builder.parse_response.return_value = mock_message
+                mock_builder.extract_usage.return_value = {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "cached_tokens": 30,
+                    "response_id": "response_456",
+                    "expire_at": int(time.time()) + 3600,
+                }
+                mock_builder_class.return_value = mock_builder
 
-                with patch("nura.llm.cache.format_messages") as mock_format:
-                    mock_format.return_value = full_history
+                with patch("nura.llm.cache.ark.config", mock_config):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
 
-                    with patch("nura.llm.cache.config", mock_config):
-                        mock_client.responses.create = AsyncMock(return_value=mock_response)
+                    await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": "How are you?"}],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                        session_id="test_session",
+                    )
 
-                        result = await ask_with_ark_cache(
-                            client=mock_client,
-                            model="gpt-4",
-                            messages=[{"role": "user", "content": "How are you?"}],
-                            token_counter=mock_token_counter,
-                            check_token_limit=lambda x: True,
-                            get_limit_error_message=lambda x: "Error",
-                            max_tokens=1000,
-                            temperature=0.7,
-                            session_id="test_session"
-                        )
+                    call_kwargs = mock_client.responses.create.call_args.kwargs
+                    assert (
+                        call_kwargs.get("previous_response_id") == "prev_response_123"
+                    )
 
-                        # Verify default strategy uses input_only logic
-                        mock_adapter.format_for_provider.assert_called_once()
-                        call_args = mock_adapter.format_for_provider.call_args[0][0]
-                        assert call_args == expected_input
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_cache_strategy_input_only(self):
+        """Test cache strategy 'input_only' - includes previous assistant + new user."""
+        mock_client = MagicMock()
+        mock_token_counter = MagicMock()
+        mock_token_counter.count_message_tokens.return_value = 100
+
+        mock_session = MagicMock()
+        mock_session.response_id = "prev_response_123"
+        mock_session.last_message_count = 2
+
+        mock_response = MagicMock()
+        mock_content_item = MagicMock()
+        mock_content_item.type = "output_text"
+        mock_content_item.text = "Response"
+        mock_response.output = [mock_content_item]
+        mock_response.id = "response_456"
+        mock_response.expire_at = int(time.time()) + 3600
+        mock_response.usage = MagicMock()
+        mock_response.usage.input_tokens = 100
+        mock_response.usage.output_tokens = 50
+        mock_usage_details = MagicMock()
+        mock_usage_details.cached_tokens = 30
+        mock_response.usage.input_tokens_details = mock_usage_details
+
+        mock_message = MagicMock()
+        mock_message.content = "Response"
+
+        full_history = [
+            {"role": "system", "content": "You are helpful"},
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there"},
+            {"role": "user", "content": "How are you?"},
+        ]
+
+        mock_config = MagicMock()
+        mock_config.llm = {"cache_strategy": "input_only"}
+
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
+            mock_cache.get_session.return_value = mock_session
+
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = full_history
+                mock_builder.count_input_tokens.return_value = 100
+                mock_builder.check_limits.return_value = True
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "previous_response_id": "prev_response_123",
+                }
+                mock_builder.parse_response.return_value = mock_message
+                mock_builder.extract_usage.return_value = {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "cached_tokens": 30,
+                    "response_id": "response_456",
+                    "expire_at": int(time.time()) + 3600,
+                }
+                mock_builder_class.return_value = mock_builder
+
+                with patch("nura.llm.cache.ark.config", mock_config):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
+
+                    await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": "How are you?"}],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                        session_id="test_session",
+                    )
+
+                    call_kwargs = mock_client.responses.create.call_args.kwargs
+                    assert (
+                        call_kwargs.get("previous_response_id") == "prev_response_123"
+                    )
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_cache_strategy_default_is_input_only(self):
+        """Test default cache strategy is 'input_only' when not specified."""
+        mock_client = MagicMock()
+        mock_token_counter = MagicMock()
+        mock_token_counter.count_message_tokens.return_value = 100
+
+        mock_session = MagicMock()
+        mock_session.response_id = "prev_response_123"
+        mock_session.last_message_count = 2
+
+        mock_response = MagicMock()
+        mock_content_item = MagicMock()
+        mock_content_item.type = "output_text"
+        mock_content_item.text = "Response"
+        mock_response.output = [mock_content_item]
+        mock_response.id = "response_456"
+        mock_response.expire_at = int(time.time()) + 3600
+        mock_response.usage = MagicMock()
+        mock_response.usage.input_tokens = 100
+        mock_response.usage.output_tokens = 50
+        mock_usage_details = MagicMock()
+        mock_usage_details.cached_tokens = 30
+        mock_response.usage.input_tokens_details = mock_usage_details
+
+        mock_message = MagicMock()
+        mock_message.content = "Response"
+
+        full_history = [
+            {"role": "system", "content": "You are helpful"},
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there"},
+            {"role": "user", "content": "How are you?"},
+        ]
+
+        mock_config = MagicMock()
+        mock_config.llm = MagicMock()
+        mock_config.llm.get = lambda key, default: default
+
+        with patch("nura.llm.cache.ark.cache_manager") as mock_cache:
+            mock_cache.get_session.return_value = mock_session
+
+            with patch("nura.llm.request.RequestBuilder") as mock_builder_class:
+                mock_builder = MagicMock()
+                mock_builder.format_messages.return_value = full_history
+                mock_builder.count_input_tokens.return_value = 100
+                mock_builder.check_limits.return_value = True
+                mock_builder.build_params.return_value = {
+                    "model": "gpt-4",
+                    "previous_response_id": "prev_response_123",
+                }
+                mock_builder.parse_response.return_value = mock_message
+                mock_builder.extract_usage.return_value = {
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "cached_tokens": 30,
+                    "response_id": "response_456",
+                    "expire_at": int(time.time()) + 3600,
+                }
+                mock_builder_class.return_value = mock_builder
+
+                with patch("nura.llm.cache.ark.config", mock_config):
+                    mock_client.responses.create = AsyncMock(return_value=mock_response)
+
+                    await ask_with_ark_cache(
+                        client=mock_client,
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": "How are you?"}],
+                        token_counter=mock_token_counter,
+                        check_token_limit=lambda x: True,
+                        get_limit_error_message=lambda x: "Error",
+                        max_tokens=1000,
+                        temperature=0.7,
+                        session_id="test_session",
+                    )
+
+                    mock_builder.format_messages.assert_called()

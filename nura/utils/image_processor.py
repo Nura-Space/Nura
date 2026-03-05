@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Optional
 
 from PIL import Image
-from loguru import logger
+from nura.core.logger import logger
 
 
 class ImageProcessor:

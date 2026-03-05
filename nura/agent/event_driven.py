@@ -17,7 +17,7 @@ import asyncio
 import time
 from typing import List, Optional
 
-from loguru import logger
+from nura.core.logger import logger
 
 from nura.context import ContextConfig, ContextManager
 
