@@ -115,6 +115,13 @@ def mock_llm():
     llm.token_counter.count_message_tokens = MagicMock(return_value=100)
     # Set adapter for provider detection
     llm._adapter = OpenAIMessageAdapter()
+    # CRITICAL: Set client and tokenizer to prevent __init__ from running
+    # and trying to load config (which may not exist in CI)
+    llm.client = MagicMock()
+    llm.tokenizer = MagicMock()
+
+    # Ensure ask_tool is set for tests
+    llm.ask_tool = MagicMock()
 
     return llm
 
