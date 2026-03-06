@@ -805,8 +805,8 @@ def main():
         p.add_argument(
             "--format",
             choices=["detail", "compact", "json"],
-            default="detail",
-            help="Output format (default: detail)",
+            default="compact",
+            help="Output format (default: compact/table)",
         )
 
     # --- search ---
