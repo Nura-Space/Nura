@@ -154,12 +154,6 @@ def format_memory(data: Dict[str, Any]) -> str:
                     line += f" (emotion: {emotion})"
                 lines.append(line)
 
-    # Prefix/Suffix (context)
-    if "prefix" in data and data["prefix"]:
-        lines.append(f"\n[prefix]: {data['prefix']}")
-    if "suffix" in data and data["suffix"]:
-        lines.append(f"[suffix]: {data['suffix']}")
-
     # Thought/Impact
     if "thought" in data and data["thought"]:
         lines.append(f"\nthought: {data['thought']}")
@@ -175,10 +169,11 @@ def format_memory(data: Dict[str, Any]) -> str:
         "actions",
         "emotion",
         "characters",
-        "prefix",
-        "suffix",
         "thought",
         "impact",
+        "location",
+        "prefix",  # Skip - not for runtime use
+        "suffix",  # Skip - not for runtime use
     }
     for key, value in data.items():
         if key not in standard_fields and value:
