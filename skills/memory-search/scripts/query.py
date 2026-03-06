@@ -148,8 +148,6 @@ def match_value(
                 snippet = "..." + snippet
             if end < len(value):
                 snippet = snippet + "..."
-            matched_text = found.group(0)
-            snippet = snippet.replace(matched_text, f"[{matched_text}]", 1)
             return snippet
     else:
         idx = value.lower().find(query.lower())
@@ -161,8 +159,6 @@ def match_value(
                 snippet = "..." + snippet
             if end < len(value):
                 snippet = snippet + "..."
-            original_match = value[idx : idx + len(query)]
-            snippet = snippet.replace(original_match, f"[{original_match}]", 1)
             return snippet
     return None
 
