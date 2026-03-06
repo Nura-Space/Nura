@@ -69,7 +69,7 @@ filter "type!=日常生活"       # 排除某类型
 filter stage=筑基期           # 模糊匹配（包含"筑基期"的所有阶段）
 filter stage=筑基中期         # 精确匹配
 list --sort stage             # 按时间线排序（重要！）
-list --sort -stage            # 倒序（从高到低）
+list --sort=-stage            # 倒序（从高到低）
 ```
 
 #### emotion（情感状态）
@@ -111,7 +111,7 @@ filter "emotion~紧张|惊恐"    # 查找多种情感
 | **列表与排序** | |
 | 列出最新事件 | `query.py list --limit 10` |
 | 按时间线排序 | `query.py list --sort stage` |
-| 倒序排列 | `query.py list --sort -stage` (前缀 `-` 表示倒序) |
+| 倒序排列 | `query.py list --sort=-stage` (前缀 `-` 表示倒序) |
 | 简洁列表 | `query.py list --no-summary` |
 | **读取详情** | |
 | 读取单个文件 | `read.py event_00042.json` |
@@ -122,7 +122,7 @@ filter "emotion~紧张|惊恐"    # 查找多种情感
 **通用参数** (search/filter/list 共享):
 - `--limit N` - 限制结果数量（默认 50，最大 200）
 - `--offset N` - 跳过前 N 个结果（分页）
-- `--sort FIELD` - 按字段排序（倒序用 `-FIELD`，如 `--sort -stage`）
+- `--sort FIELD` - 按字段排序（倒序用 `--sort=-FIELD`，如 `--sort=-stage`）
 - `--format FORMAT` - 输出格式：
   - `compact` (默认) - 表格格式，紧凑高效
   - `detail` - 详细文本格式
