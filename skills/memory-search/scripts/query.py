@@ -46,6 +46,20 @@ def truncate_text(text: str, max_len: int) -> str:
     return text[:max_len] + "..."
 
 
+def normalize_value(value: str, max_len: int = 0) -> str:
+    """
+    规范化字段值：
+    - 空值/None -> "?"
+    - "未明确" -> "?"
+    - 其他值 -> 可选截断
+    """
+    if not value or value in ["未明确", "-"]:
+        return "?"
+    if max_len > 0 and len(value) > max_len:
+        return value[:max_len] + "..."
+    return value
+
+
 # --- Core utilities ---
 
 
@@ -360,17 +374,20 @@ def output_results(
 
     if fmt == "compact":
         # Markdown 表格格式
-        print("| ID | Type | Stage | Summary | Matches |")
-        print("|---|---|---|---|---|")
+        print("| ID | Type | Stage | Location | Emotion | Summary |")
+        print("|---|---|---|---|---|---|")
 
         for filename, data, matched_fields in results:
             event_id = extract_event_id(filename)
-            type_val = data.get("type", "?")
-            stage_val = data.get("stage", "?")
-            summary = truncate_text(data.get("summary", ""), 50)
-            matches = str(len(matched_fields)) if matched_fields else "-"
+            type_val = normalize_value(data.get("type", ""))
+            stage_val = normalize_value(data.get("stage", ""))
+            location = normalize_value(data.get("location", ""), 15)
+            emotion = normalize_value(data.get("emotion", ""), 10)
+            summary = normalize_value(data.get("summary", ""), 50)
 
-            print(f"| {event_id} | {type_val} | {stage_val} | {summary} | {matches} |")
+            print(
+                f"| {event_id} | {type_val} | {stage_val} | {location} | {emotion} | {summary} |"
+            )
     else:
         # detail 格式保持不变
         for filename, data, matched_fields in results:
@@ -648,24 +665,32 @@ def cmd_list(store: MemoryStore, args: argparse.Namespace):
     if args.format == "compact":
         # Markdown 表格格式
         if no_summary:
-            print("| ID | Type | Stage |")
-            print("|---|---|---|")
+            print("| ID | Type | Stage | Location | Emotion |")
+            print("|---|---|---|---|---|")
             for filename, data, _ in results:
                 event_id = extract_event_id(filename)
-                type_val = data.get("type", "?")
-                stage_val = data.get("stage", "?")
-                print(f"| {event_id} | {type_val} | {stage_val} |")
+                type_val = normalize_value(data.get("type", ""))
+                stage_val = normalize_value(data.get("stage", ""))
+                location = normalize_value(data.get("location", ""), 15)
+                emotion = normalize_value(data.get("emotion", ""), 10)
+                print(
+                    f"| {event_id} | {type_val} | {stage_val} | {location} | {emotion} |"
+                )
         else:
-            print("| ID | Type | Stage | Summary |")
-            print("|---|---|---|---|")
+            print("| ID | Type | Stage | Location | Emotion | Summary |")
+            print("|---|---|---|---|---|---|")
             for filename, data, _ in results:
                 event_id = extract_event_id(filename)
-                type_val = data.get("type", "?")
-                stage_val = data.get("stage", "?")
-                summary = truncate_text(
+                type_val = normalize_value(data.get("type", ""))
+                stage_val = normalize_value(data.get("stage", ""))
+                location = normalize_value(data.get("location", ""), 15)
+                emotion = normalize_value(data.get("emotion", ""), 10)
+                summary = normalize_value(
                     data.get("summary") or data.get("description", ""), 50
                 )
-                print(f"| {event_id} | {type_val} | {stage_val} | {summary} |")
+                print(
+                    f"| {event_id} | {type_val} | {stage_val} | {location} | {emotion} | {summary} |"
+                )
     else:
         # detail 格式保持不变
         for filename, data, _ in results:
