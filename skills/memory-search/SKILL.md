@@ -106,23 +106,41 @@ requires:
 
 | 想做什么 | 命令 |
 |----------|------|
-| 了解记忆全貌 | `query.py stats` |
-| 发现可用字段 | `query.py fields` |
+| **探索与统计** | |
+| 了解记忆分布 | `query.py stats` (按 type 统计) |
+| 多维度统计 | `query.py stats --by type,stage,emotion` |
+| 发现所有字段 | `query.py fields` |
+| **搜索** | |
 | 关键词搜索 | `query.py search "关键词"` |
-| 正则搜索 | `query.py search -r "模式"` |
-| 限定字段搜索 | `query.py search "关键词" --fields summary,description` |
-| 条件过滤 | `query.py filter field=value` |
-| 多条件过滤 | `query.py filter type=战斗 stage=凡人` |
+| 正则搜索 | `query.py search -r "韩立\|韩老魔"` |
+| 限定字段搜索 | `query.py search "战斗" --fields summary,description` |
+| **过滤** | |
+| 单条件过滤 | `query.py filter type=战斗` |
+| 多条件过滤 | `query.py filter type=战斗 stage=筑基期` |
+| 按地点过滤 | `query.py filter location=黄枫谷` |
+| 按情感过滤 | `query.py filter emotion=紧张` |
 | 嵌套字段过滤 | `query.py filter "characters.name=韩立"` |
 | 正则过滤 | `query.py filter "type~战斗\|修炼"` |
-| 不等于过滤 | `query.py filter "type!=日常生活"` |
-| 分组统计 | `query.py stats --by type,stage` |
-| 列出文件 | `query.py list --limit N` |
-| 读取详情 | `read.py event_XXXXX.json` |
-| 批量读取 | `read.py file1.json file2.json` |
-| 选择字段读取 | `read.py event_XXXXX.json --fields summary,type` |
+| 排除过滤 | `query.py filter "type!=日常生活"` |
+| **列表与排序** | |
+| 列出最新事件 | `query.py list --limit 10` |
+| 按时间线排序 | `query.py list --sort stage` |
+| 倒序排列 | `query.py list --sort -stage` (前缀 `-` 表示倒序) |
+| 简洁列表 | `query.py list --no-summary` |
+| **读取详情** | |
+| 读取单个文件 | `read.py event_00042.json` |
+| 批量读取 | `read.py event_00042.json event_00043.json` |
+| 选择字段 | `read.py event_00042.json --fields summary,type,emotion` |
+| JSON 输出 | `read.py event_00042.json --json` |
 
-**通用参数** (search/filter/list 共享): `--limit N`, `--offset N`, `--sort FIELD` (倒序用 `--sort="-field"`), `--format detail|compact|json`
+**通用参数** (search/filter/list 共享):
+- `--limit N` - 限制结果数量（默认 50，最大 200）
+- `--offset N` - 跳过前 N 个结果（分页）
+- `--sort FIELD` - 按字段排序（倒序用 `-FIELD`，如 `--sort -stage`）
+- `--format FORMAT` - 输出格式：
+  - `compact` (默认) - 表格格式，紧凑高效
+  - `detail` - 详细文本格式
+  - `json` - JSON 格式，程序化使用
 
 ## 搜索策略
 
