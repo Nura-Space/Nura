@@ -36,7 +36,7 @@ class SendMessage(BaseTool):
     """
 
     name: str = "send_message"
-    description: str = "发送消息给用户。可选添加emoji表情，根据消息情感选择合适的类型。"
+    description: str = "发送消息给用户。可选添加emoji表情，根据消息情感选择合适的类型。每次回复只调用一次，发送完成后必须调用 end_chat 结束本轮对话，不要重复发送相同内容。"
     parameters: dict = {
         "type": "object",
         "properties": {

@@ -177,15 +177,34 @@ class BaseAgent(BaseModel, ABC):
         logger.warning(f"Agent detected stuck state. Added prompt: {stuck_prompt}")
 
     def is_stuck(self) -> bool:
-        """Check if the agent is stuck in a loop by detecting duplicate content"""
+        """Check if the agent is stuck in a loop by detecting duplicate content or tool calls"""
         if len(self.memory.messages) < 2:
             return False
 
         last_message = self.memory.messages[-1]
+
+        # Check for repeated tool calls (e.g. send_message called with same args repeatedly)
+        if last_message.tool_calls:
+            last_sig = tuple(
+                (tc.function.name, tc.function.arguments)
+                for tc in last_message.tool_calls
+            )
+            duplicate_count = sum(
+                1
+                for msg in reversed(self.memory.messages[:-1])
+                if msg.role == "assistant"
+                and msg.tool_calls
+                and tuple(
+                    (tc.function.name, tc.function.arguments)
+                    for tc in msg.tool_calls
+                ) == last_sig
+            )
+            return duplicate_count >= self.duplicate_threshold
+
+        # Check for repeated text content
         if not last_message.content:
             return False
 
-        # Count identical content occurrences
         duplicate_count = sum(
             1
             for msg in reversed(self.memory.messages[:-1])

@@ -34,6 +34,7 @@ websearch = [
     "baidusearch~=1.0.3",
 ]
 feishu = ["lark-oapi"]
+ark = ["volcengine-python-sdk[ark]"]
 all = [
     "docker~=7.1.0",
     "boto3~=1.37.18",
@@ -43,6 +44,7 @@ all = [
     "requests~=2.32.3",
     "baidusearch~=1.0.3",
     "lark-oapi",
+    "volcengine-python-sdk[ark]",
 ]
 
 [project.scripts]

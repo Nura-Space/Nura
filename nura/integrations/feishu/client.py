@@ -11,7 +11,7 @@ from nura.core.logger import logger
 
 from nura.services.base import BaseClient, ClientFactory
 from nura.services.messaging import MessagingService
-from nura.services.sendable import Sendable, TextContent, FileContent, AudioContent
+from nura.services.sendable import Sendable, TextContent, FileContent, AudioContent, ImageContent
 from nura.services import TTSService
 
 
@@ -200,6 +200,8 @@ class FeishuClient(BaseClient, MessagingService):
             await self._send_text(sendable)
         elif isinstance(sendable, AudioContent):
             await self._send_audio(sendable)
+        elif isinstance(sendable, ImageContent):
+            await self._send_image(sendable)
         elif isinstance(sendable, FileContent):
             await self._send_file(sendable)
         else:
@@ -267,6 +269,51 @@ class FeishuClient(BaseClient, MessagingService):
         response = await asyncio.to_thread(self._client.im.v1.message.create, request)
         if not response.success():
             logger.error(f"Failed to send audio: {response.code} - {response.msg}")
+
+    async def _send_image(self, image_content: ImageContent):
+        """Upload and send an image using the Feishu image API."""
+        if not self._chat_id:
+            logger.error("chat_id not set")
+            return
+
+        try:
+            f = builtins.open(image_content.file_path, "rb")
+            request = (
+                lark.im.v1.CreateImageRequest.builder()
+                .request_body(
+                    lark.im.v1.CreateImageRequestBody.builder()
+                    .image_type("message")
+                    .image(f)
+                    .build()
+                )
+                .build()
+            )
+            response = await asyncio.to_thread(self._client.im.v1.image.create, request)
+            f.close()
+            if not response.success():
+                logger.error(f"Image upload failed: {response.code} - {response.msg}")
+                return
+            image_key = response.data.image_key
+        except Exception as e:
+            logger.error(f"Image upload exception: {e}")
+            return
+
+        content_json = json.dumps({"image_key": image_key})
+        request = (
+            lark.im.v1.CreateMessageRequest.builder()
+            .receive_id_type("chat_id")
+            .request_body(
+                lark.im.v1.CreateMessageRequestBody.builder()
+                .receive_id(self._chat_id)
+                .msg_type("image")
+                .content(content_json)
+                .build()
+            )
+            .build()
+        )
+        response = await asyncio.to_thread(self._client.im.v1.message.create, request)
+        if not response.success():
+            logger.error(f"Failed to send image: {response.code} - {response.msg}")
 
     async def _send_file(self, file_content: FileContent):
         """Upload and send a generic file (non-audio)."""

@@ -6,7 +6,7 @@ import uuid
 
 from nura.core.logger import logger
 
-from nura.services.sendable import AudioContent, FileContent
+from nura.services.sendable import AudioContent, FileContent, ImageContent
 from nura.services.utils import convert_to_opus, get_audio_duration
 from nura.tool.base import BaseTool, ToolResult
 
@@ -25,6 +25,9 @@ def _get_client():
 
 # Audio file types that should be sent as AudioContent
 AUDIO_TYPES = ("opus", "mp3", "wav")
+
+# Image file types that should be sent as ImageContent
+IMAGE_TYPES = ("png", "jpg", "jpeg", "gif", "webp")
 
 
 class SendFile(BaseTool):
@@ -75,8 +78,11 @@ class SendFile(BaseTool):
         file_name = os.path.basename(file_path)
         sendable = None
 
+        # Handle image files
+        if file_type.lower() in IMAGE_TYPES:
+            sendable = ImageContent(file_path=file_path, file_type=file_type.lower())
         # Handle audio files specially
-        if file_type.lower() in AUDIO_TYPES:
+        elif file_type.lower() in AUDIO_TYPES:
             # Get audio duration
             duration = await get_audio_duration(file_path)
             if duration is None:

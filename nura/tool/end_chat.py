@@ -3,9 +3,12 @@
 from nura.tool.base import BaseTool, ToolResult
 from nura.core.logger import logger
 
-_ENDCHAT_DESCRIPTION = """End the current chat session with the user.
-Use this tool when the conversation is complete or the user indicates they want to end the chat.
-The agent will stop processing further messages in this session."""
+_ENDCHAT_DESCRIPTION = """结束当前对话轮次。在以下情况下必须调用：
+1. 每次通过 send_message 发送回复后，立即调用以结束本轮处理
+2. 用户明确表示结束对话（如说再见）
+3. 任务已完成，无需进一步响应
+
+调用后 agent 将停止处理，等待用户的下一条消息。"""
 
 
 class EndChat(BaseTool):

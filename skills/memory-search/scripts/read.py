@@ -116,24 +116,45 @@ def filter_fields(data: Dict[str, Any], fields: List[str]) -> Dict[str, Any]:
     return result
 
 
+def is_meaningful_value(value: Any) -> bool:
+    """
+    Check if a value is meaningful (not empty/unclear/unknown).
+
+    Returns False for:
+        - Empty strings, None
+        - "未明确", "?", "无" (unclear/unknown indicators)
+        - Empty lists/dicts
+    """
+    if not value:  # None, "", [], {}, 0, False
+        return False
+
+    # String indicators of unclear/unknown values
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in ("未明确", "?", "无", "unknown", "n/a", "null"):
+            return False
+
+    return True
+
+
 def format_memory(data: Dict[str, Any]) -> str:
     """Format memory data for human-readable display."""
     lines = []
 
     # Basic fields
     for field in ["type", "stage", "summary", "description"]:
-        if field in data and data[field]:
+        if field in data and is_meaningful_value(data[field]):
             lines.append(f"{field}: {data[field]}")
 
     # Actions
-    if "actions" in data and data["actions"]:
+    if "actions" in data and is_meaningful_value(data["actions"]):
         if isinstance(data["actions"], list):
             lines.append(f"actions: {', '.join(str(a) for a in data['actions'])}")
         else:
             lines.append(f"actions: {data['actions']}")
 
     # Emotion
-    if "emotion" in data and data["emotion"]:
+    if "emotion" in data and is_meaningful_value(data["emotion"]):
         lines.append(f"emotion: {data['emotion']}")
 
     # Characters
@@ -150,14 +171,15 @@ def format_memory(data: Dict[str, Any]) -> str:
                     else str(actions)
                 )
                 line = f"  - {name}: {action_str}"
-                if emotion:
+                # Only show emotion if it's meaningful
+                if is_meaningful_value(emotion):
                     line += f" (emotion: {emotion})"
                 lines.append(line)
 
     # Thought/Impact
-    if "thought" in data and data["thought"]:
+    if "thought" in data and is_meaningful_value(data["thought"]):
         lines.append(f"\nthought: {data['thought']}")
-    if "impact" in data and data["impact"]:
+    if "impact" in data and is_meaningful_value(data["impact"]):
         lines.append(f"impact: {data['impact']}")
 
     # Any remaining fields not in the standard set

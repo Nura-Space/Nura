@@ -43,3 +43,10 @@ class AudioContent(FileContent):
     """
 
     duration: int = Field(default=None, description="Duration in milliseconds")
+
+
+class ImageContent(Sendable):
+    """An image to upload and send via the image API."""
+
+    file_path: str = Field(..., description="Absolute path to the image file")
+    file_type: str = Field(..., description="Image type: png, jpg, jpeg, gif, webp")
